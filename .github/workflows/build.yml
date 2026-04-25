@@ -14,10 +14,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Select Xcode
+      - name: Debug Environment
         run: |
-          sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
           xcodebuild -version
+          xcode-select -p
+          ls -la BankGridApp.xcodeproj/
+          ls -la BankGridApp.xcodeproj/xcshareddata/xcschemes/ 2>/dev/null || echo "No shared schemes found"
+
+      - name: List Xcode Project Info
+        run: |
+          xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true
 
       - name: Build
         run: |
