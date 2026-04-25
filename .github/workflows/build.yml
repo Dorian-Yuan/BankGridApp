@@ -67,13 +67,19 @@ jobs:
             ENABLE_USER_SCRIPT_SANDBOXING=NO \
             2>&1 | tee build.log
 
-      - name: Output build log to summary
+      - name: Post build log to issue
         if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "## Build Log" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          cat build.log >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          if [ -f build.log ]; then
+            LOG_CONTENT=$(head -200 build.log)
+            curl -s -X POST \
+              -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/${{ github.repository }}/issues/1/comments \
+              -d "{\"body\": \"Build log (run #${{ github.run_number }}):\\n\\n\`\`\`\\n${LOG_CONTENT}\\n\`\`\`\"}" || true
+          fi
 
       - name: Create IPA
         run: |
