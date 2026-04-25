@@ -1,0 +1,13 @@
+build/
+DerivedData/
+*.xcuserdata/
+*.xcworkspace/xcuserdata/
+xcuserdata/
+*.moved-aside
+*.ipa
+*.dSYM.zip
+*.dSYM
+Pods/
+.DS_Store
+*.swp
+*~

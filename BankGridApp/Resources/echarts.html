@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+#chart { width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<div id="chart"></div>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script>
+var chart = null;
+var currentTheme = 'dark';
+
+function getThemeColors() {
+    var isDark = currentTheme === 'dark';
+    return {
+        bg: 'transparent',
+        textColor: isDark ? '#8888aa' : '#8e8e93',
+        axisLineColor: isDark ? '#2a2a4a' : '#d1d1d6',
+        splitLineColor: isDark ? '#1a1a3e' : '#f0f0f5',
+        tooltipBg: isDark ? 'rgba(18,18,42,0.95)' : 'rgba(255,255,255,0.95)',
+        tooltipBorder: isDark ? '#2a2a4a' : '#d1d1d6',
+        tooltipText: isDark ? '#e0e0e0' : '#1c1c1e',
+        upColor: '#ff3b30',
+        downColor: '#34c759',
+        difColor: '#FF9F0A',
+        deaColor: '#64D2FF',
+        rsi6Color: '#FF9F0A',
+        rsi14Color: '#BF5AF2'
+    };
+}
+
+function initChart() {
+    var el = document.getElementById('chart');
+    if (!el) return;
+    if (typeof echarts === 'undefined') {
+        el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#8888aa;font-size:14px">ECharts 加载中，请稍候...</div>';
+        setTimeout(initChart, 500);
+        return;
+    }
+    chart = echarts.init(el);
+}
+
+function setTheme(theme) {
+    currentTheme = theme;
+}
+
+function updateChart(jsonStr) {
+    if (!chart) initChart();
+    if (!chart) return;
+
+    var data;
+    try { data = JSON.parse(jsonStr); } catch(e) { return; }
+
+    var tc = getThemeColors();
+    var option = {};
+
+    if (data.mode === 'trend') {
+        option = buildTrendOption(data, tc);
+    } else {
+        option = buildTechOption(data, tc);
+    }
+
+    chart.clear();
+    chart.setOption(option, true);
+}
+
+function buildTrendOption(data, tc) {
+    var series = data.series || [];
+
+    return {
+        backgroundColor: tc.bg,
+        tooltip: {
+            trigger: 'axis',
+            backgroundColor: tc.tooltipBg,
+            borderColor: tc.tooltipBorder,
+            textStyle: { color: tc.tooltipText, fontSize: 12 },
+            formatter: function(params) {
+                if (!params || params.length === 0) return '';
+                var date = params[0].axisValue;
+                var html = '<div style="font-weight:600;margin-bottom:4px">' + date + '</div>';
+                params.forEach(function(p) {
+                    var val = p.value;
+                    if (val === null || val === undefined) return;
+                    var name = p.seriesName;
+                    if (name === '中证(÷1000)') {
+                        var realVal = val * 1000;
+                        html += '<div style="display:flex;justify-content:space-between;gap:16px"><span style="color:#8888aa">中证银行</span><span style="font-weight:600">' + realVal.toFixed(2) + '</span></div>';
+                    } else {
+                        var color = p.color || '#fff';
+                        html += '<div style="display:flex;justify-content:space-between;gap:16px"><span style="color:' + color + '">' + name + '</span><span style="font-weight:600">' + val.toFixed(3) + '</span></div>';
+                    }
+                });
+                return html;
+            }
+        },
+        grid: { left: '12%', right: '5%', bottom: '10%', top: '5%', containLabel: false },
+        xAxis: { type: 'category', data: data.dates, axisLabel: { color: tc.textColor, fontSize: 10, margin: 8 }, axisLine: { lineStyle: { color: tc.axisLineColor } } },
+        yAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: tc.splitLineColor, type: 'dashed' } }, axisLabel: { color: tc.textColor, fontSize: 10 } },
+        series: series
+    };
+}
+
+function buildTechOption(data, tc) {
+    var kData = data.kData || [];
+    var macdBar = data.macdBar || [];
+    var difLine = data.difLine || [];
+    var deaLine = data.deaLine || [];
+    var rsi6Line = data.rsi6Line || [];
+    var rsi14Line = data.rsi14Line || [];
+    var crossPoints = data.crossPoints || [];
+
+    var difSeries = { name: 'DIF', type: 'line', xAxisIndex: 1, yAxisIndex: 1, data: difLine, symbol: 'none', lineStyle: { color: tc.difColor, width: 1.5 } };
+    if (crossPoints.length > 0) {
+        difSeries.markPoint = {
+            data: crossPoints.map(function(p) {
+                return {
+                    name: p.type, coord: [p.date, p.value],
+                    symbol: 'triangle', symbolRotate: p.type === '金叉' ? 0 : 180, symbolSize: 6,
+                    itemStyle: { color: p.type === '金叉' ? '#34c759' : '#ff3b30' },
+                    label: { show: false }
+                };
+            }),
+            animation: false
+        };
+    }
+
+    return {
+        backgroundColor: tc.bg,
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: { type: 'cross', lineStyle: { color: '#555' } },
+            borderWidth: 1, borderColor: tc.tooltipBorder, backgroundColor: tc.tooltipBg,
+            textStyle: { color: tc.tooltipText, fontSize: 12 },
+            formatter: function(params) {
+                if (!params || params.length === 0) return '';
+                var date = params[0].axisValue;
+                var html = '<div style="font-weight:600;margin-bottom:4px">' + date + '</div>';
+                var kParam = params.find(function(p) { return p.seriesName === 'K线'; });
+                if (kParam && kParam.data && kParam.data.length >= 4) {
+                    html += '<div style="margin-bottom:2px"><b>K线</b></div>';
+                    html += '<div style="font-size:12px;color:' + tc.tooltipText + '">开盘: ' + kParam.data[1].toFixed(3) + '  收盘: ' + kParam.data[2].toFixed(3) + '</div>';
+                    html += '<div style="font-size:12px;color:' + tc.tooltipText + '">最低: ' + kParam.data[3].toFixed(3) + '  最高: ' + kParam.data[4].toFixed(3) + '</div>';
+                }
+                var macdParam = params.find(function(p) { return p.seriesName === 'MACD'; });
+                var difParam = params.find(function(p) { return p.seriesName === 'DIF'; });
+                var deaParam = params.find(function(p) { return p.seriesName === 'DEA'; });
+                if (macdParam || difParam || deaParam) {
+                    html += '<div style="margin-top:4px;margin-bottom:2px"><b>MACD</b></div>';
+                    if (difParam && difParam.value !== null && difParam.value !== undefined) html += '<div style="font-size:12px;color:' + tc.difColor + '">DIF: ' + difParam.value.toFixed(4) + '</div>';
+                    if (deaParam && deaParam.value !== null && deaParam.value !== undefined) html += '<div style="font-size:12px;color:' + tc.deaColor + '">DEA: ' + deaParam.value.toFixed(4) + '</div>';
+                    if (macdParam && macdParam.value !== null && macdParam.value !== undefined) html += '<div style="font-size:12px;color:' + (macdParam.value > 0 ? tc.upColor : tc.downColor) + '">MACD: ' + macdParam.value.toFixed(4) + '</div>';
+                }
+                var rsi6Param = params.find(function(p) { return p.seriesName === 'RSI(6)'; });
+                var rsi14Param = params.find(function(p) { return p.seriesName === 'RSI(14)'; });
+                if (rsi6Param || rsi14Param) {
+                    html += '<div style="margin-top:4px;margin-bottom:2px"><b>RSI</b></div>';
+                    if (rsi6Param && rsi6Param.value !== null && rsi6Param.value !== undefined) html += '<div style="font-size:12px;color:' + tc.rsi6Color + '">RSI(6): ' + rsi6Param.value.toFixed(1) + '</div>';
+                    if (rsi14Param && rsi14Param.value !== null && rsi14Param.value !== undefined) html += '<div style="font-size:12px;color:' + tc.rsi14Color + '">RSI(14): ' + rsi14Param.value.toFixed(1) + '</div>';
+                }
+                return html;
+            }
+        },
+        axisPointer: { link: { xAxisIndex: 'all' } },
+        grid: [
+            { left: '14%', right: '4%', top: '3%', height: '32%' },
+            { left: '14%', right: '4%', top: '42%', height: '18%' },
+            { left: '14%', right: '4%', top: '66%', height: '18%' }
+        ],
+        xAxis: [
+            { type: 'category', data: data.dates, gridIndex: 0, axisLabel: { show: false }, axisLine: { lineStyle: { color: tc.axisLineColor } } },
+            { type: 'category', data: data.dates, gridIndex: 1, axisLabel: { show: false }, axisLine: { lineStyle: { color: tc.axisLineColor } } },
+            { type: 'category', data: data.dates, gridIndex: 2, axisLabel: { color: tc.textColor, fontSize: 10, margin: 8 }, axisLine: { lineStyle: { color: tc.axisLineColor } } }
+        ],
+        yAxis: [
+            { type: 'value', scale: true, gridIndex: 0, splitLine: { lineStyle: { color: tc.splitLineColor, type: 'dashed' } }, axisLabel: { color: tc.textColor, fontSize: 10 } },
+            { type: 'value', gridIndex: 1, splitLine: { show: true, lineStyle: { color: tc.splitLineColor, type: 'dashed' } }, axisLabel: { color: tc.textColor, fontSize: 10 } },
+            { type: 'value', gridIndex: 2, splitLine: { lineStyle: { color: tc.splitLineColor, type: 'dashed' } }, axisLabel: { color: tc.textColor, fontSize: 10 }, min: 0, max: 100 }
+        ],
+        series: [
+            { name: 'K线', type: 'candlestick', xAxisIndex: 0, yAxisIndex: 0, data: kData,
+              itemStyle: { color: tc.upColor, color0: tc.downColor, borderColor: tc.upColor, borderColor0: tc.downColor } },
+            { name: 'MACD', type: 'bar', xAxisIndex: 1, yAxisIndex: 1, data: macdBar },
+            difSeries,
+            { name: 'DEA', type: 'line', xAxisIndex: 1, yAxisIndex: 1, data: deaLine, symbol: 'none', lineStyle: { color: tc.deaColor, width: 1.5 } },
+            { name: 'RSI(6)', type: 'line', xAxisIndex: 2, yAxisIndex: 2, data: rsi6Line, symbol: 'none', lineStyle: { color: tc.rsi6Color, width: 1.5 },
+              markLine: { silent: true, symbol: 'none', animation: false, lineStyle: { type: 'dashed', width: 1 },
+                data: [
+                    { yAxis: 70, lineStyle: { color: 'rgba(255,59,48,0.4)' }, label: { show: true, position: 'insideEndTop', formatter: '70', color: tc.textColor, fontSize: 9 } },
+                    { yAxis: 30, lineStyle: { color: 'rgba(52,199,89,0.4)' }, label: { show: true, position: 'insideEndTop', formatter: '30', color: tc.textColor, fontSize: 9 } }
+                ]
+              }
+            },
+            { name: 'RSI(14)', type: 'line', xAxisIndex: 2, yAxisIndex: 2, data: rsi14Line, symbol: 'none', lineStyle: { color: tc.rsi14Color, width: 1.5 } }
+        ],
+        graphic: [
+            { type: 'line', left: '14%', right: '4%', top: '38%', shape: { x1: 0, y1: 0, x2: 1, y2: 0 }, style: { stroke: tc.axisLineColor, lineWidth: 1 } },
+            { type: 'line', left: '14%', right: '4%', top: '62%', shape: { x1: 0, y1: 0, x2: 1, y2: 0 }, style: { stroke: tc.axisLineColor, lineWidth: 1 } },
+            { type: 'text', left: '3%', top: '14%', style: { text: 'K线', fill: tc.textColor, fontSize: 10, opacity: 0.6 } },
+            { type: 'text', left: '3%', top: '49%', style: { text: 'MACD', fill: tc.textColor, fontSize: 10, opacity: 0.6 } },
+            { type: 'text', left: '3%', top: '73%', style: { text: 'RSI', fill: tc.textColor, fontSize: 10, opacity: 0.6 } }
+        ]
+    };
+}
+
+window.addEventListener('resize', function() {
+    if (chart) chart.resize();
+});
+
+initChart();
+</script>
+</body>
+</html>

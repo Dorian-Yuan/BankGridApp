@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="1" systemVersion="1" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="Position" representedClassName="Position" syncable="YES">
+        <attribute name="code" attributeType="String"/>
+        <attribute name="name" attributeType="String"/>
+        <attribute name="short" attributeType="String"/>
+        <attribute name="shares" attributeType="Integer 32" defaultValueString="0"/>
+        <attribute name="basePrice" attributeType="Double" defaultValueString="0.0"/>
+        <attribute name="avgCost" attributeType="Double" defaultValueString="0.0"/>
+        <attribute name="totalCost" attributeType="Double" defaultValueString="0.0"/>
+    </entity>
+    <entity name="TradeLog" representedClassName="TradeLog" syncable="YES">
+        <attribute name="id" attributeType="UUID"/>
+        <attribute name="action" attributeType="String"/>
+        <attribute name="bank" attributeType="String"/>
+        <attribute name="price" attributeType="Double" defaultValueString="0.0"/>
+        <attribute name="shares" attributeType="Integer 32" defaultValueString="0"/>
+        <attribute name="amount" attributeType="Double" defaultValueString="0.0"/>
+        <attribute name="fee" attributeType="Double" defaultValueString="0.0"/>
+        <attribute name="dividend" attributeType="Double" defaultValueString="0.0"/>
+        <attribute name="divTax" attributeType="Double" defaultValueString="0.0"/>
+        <attribute name="oldBase" attributeType="Double" defaultValueString="0.0"/>
+        <attribute name="newBase" attributeType="Double" defaultValueString="0.0"/>
+        <attribute name="remainShares" attributeType="Integer 32" defaultValueString="0"/>
+        <attribute name="totalShares" attributeType="Integer 32" defaultValueString="0"/>
+        <attribute name="buys" attributeType="Integer 32" defaultValueString="0"/>
+        <attribute name="sells" attributeType="Integer 32" defaultValueString="0"/>
+        <attribute name="totalValue" attributeType="Double" defaultValueString="0.0"/>
+        <attribute name="target" attributeType="Double" defaultValueString="0.0"/>
+        <attribute name="timestamp" attributeType="Date"/>
+    </entity>
+</model>
