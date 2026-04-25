@@ -19,18 +19,9 @@ jobs:
         with:
           xcode-version: '15.4'
 
-      - name: Debug Info
-        run: |
-          xcodebuild -version
-          echo "--- Project list ---"
-          xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true
-          echo "--- Scheme files ---"
-          find BankGridApp.xcodeproj -name "*.xcscheme" 2>/dev/null || true
-          echo "--- PbxProj check ---"
-          head -5 BankGridApp.xcodeproj/project.pbxproj
-
       - name: Build
         run: |
+          set -o pipefail
           xcodebuild build \
             -project BankGridApp.xcodeproj \
             -target BankGridApp \
@@ -42,22 +33,18 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             DEVELOPMENT_TEAM="" \
             ENABLE_USER_SCRIPT_SANDBOXING=NO \
-            2>&1 | tee build.log || true
-          echo "--- Build exit code: $? ---"
-          echo "--- Find .app ---"
-          find build/DerivedData -name "*.app" 2>/dev/null || true
-          echo "--- Find any errors in log ---"
-          grep -i "error:" build.log | head -30 || true
+            2>&1 | tee build.log
 
       - name: Create IPA
         run: |
-          APP_PATH=$(find build/DerivedData -name "BankGridApp.app" -path "*iphoneos*" | head -1)
-          echo "Found app at: $APP_PATH"
+          echo "Searching for BankGridApp.app..."
+          find build/DerivedData -name "*.app" 2>/dev/null || true
+          APP_PATH=$(find build/DerivedData -name "BankGridApp.app" | head -1)
           if [ -z "$APP_PATH" ]; then
-            echo "ERROR: BankGridApp.app not found in expected location"
-            find build/DerivedData -name "*.app" 2>/dev/null || true
+            echo "ERROR: BankGridApp.app not found"
             exit 1
           fi
+          echo "Found: $APP_PATH"
           mkdir -p Payload
           cp -r "$APP_PATH" Payload/
           zip -qr BankGridApp.ipa Payload
