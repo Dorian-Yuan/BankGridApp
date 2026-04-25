@@ -81,8 +81,22 @@ jobs:
 
       - name: Create IPA
         run: |
+          echo "Searching for .app in archive..."
+          find build/BankGridApp.xcarchive -name "*.app" -type d 2>/dev/null || true
+          echo "Archive structure:"
+          find build/BankGridApp.xcarchive -maxdepth 4 -type d 2>/dev/null || true
+          APP_PATH=$(find build/BankGridApp.xcarchive -name "*.app" -type d | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: .app not found in archive, trying DerivedData..."
+            APP_PATH=$(find build -name "*.app" -type d | head -1)
+          fi
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: No .app found anywhere"
+            exit 1
+          fi
+          echo "Found: $APP_PATH"
           mkdir -p Payload
-          cp -r build/BankGridApp.xcarchive/Products/Applications/BankGridApp.app Payload/
+          cp -r "$APP_PATH" Payload/
           zip -qr BankGridApp.ipa Payload
           ls -la BankGridApp.ipa
 
