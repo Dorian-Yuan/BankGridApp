@@ -14,18 +14,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Debug Environment
+      - name: Debug - Show project structure
         run: |
+          echo "=== Project Structure ==="
+          find . -maxdepth 4 -not -path './.git/*' | head -80
+          echo "=== Xcode version ==="
           xcodebuild -version
-          xcode-select -p
-          ls -la BankGridApp.xcodeproj/
-          ls -la BankGridApp.xcodeproj/xcshareddata/xcschemes/ 2>/dev/null || echo "No shared schemes found"
-
-      - name: List Xcode Project Info
-        run: |
+          echo "=== Trying xcodebuild -list ==="
           xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true
+          echo "=== Trying xcodebuild -showBuildSettings ==="
+          xcodebuild -project BankGridApp.xcodeproj -scheme BankGridApp -showBuildSettings 2>&1 | head -30 || true
 
-      - name: Build
+      - name: Build with xcodebuild
         run: |
           set -o pipefail
           xcodebuild build \
@@ -43,12 +43,9 @@ jobs:
 
       - name: Create IPA
         run: |
-          echo "Searching for BankGridApp.app..."
-          find build/DerivedData -name "*.app" -type d 2>/dev/null || true
           APP_PATH=$(find build/DerivedData -name "BankGridApp.app" -type d | head -1)
           if [ -z "$APP_PATH" ]; then
             echo "ERROR: BankGridApp.app not found"
-            echo "Listing DerivedData contents..."
             find build/DerivedData -maxdepth 5 -type d 2>/dev/null || true
             exit 1
           fi
