@@ -14,34 +14,40 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Debug - Diagnose xcodebuild issue
+      - name: Debug - Diagnose and post to issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "=== Xcode version ==="
-          xcodebuild -version
-          echo ""
-          echo "=== xcode-select ==="
-          xcode-select -p
-          echo ""
-          echo "=== Project Structure ==="
-          find . -maxdepth 4 -not -path './.git/*' | head -80
-          echo ""
-          echo "=== xcodebuild -list ==="
-          xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true
-          echo ""
-          echo "=== xcodebuild -showBuildSettings (first 50 lines) ==="
-          xcodebuild -project BankGridApp.xcodeproj -scheme BankGridApp -showBuildSettings 2>&1 | head -50 || true
-          echo ""
-          echo "=== Scheme file ==="
-          cat BankGridApp.xcodeproj/xcshareddata/xcschemes/BankGridApp.xcscheme 2>/dev/null || echo "No scheme file found"
-          echo ""
-          echo "=== Workspace ==="
-          ls -laR BankGridApp.xcodeproj/project.xcworkspace/ 2>/dev/null || echo "No workspace dir"
-          echo ""
-          echo "=== pbxproj file size ==="
-          wc -l BankGridApp.xcodeproj/project.pbxproj
-          echo ""
-          echo "=== Try building with -target instead ==="
-          xcodebuild build -project BankGridApp.xcodeproj -target BankGridApp -destination 'generic/platform=iOS' -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO 2>&1 | head -30 || true
+          {
+            echo "=== Xcode version ==="
+            xcodebuild -version
+            echo ""
+            echo "=== xcode-select ==="
+            xcode-select -p
+            echo ""
+            echo "=== Project Structure ==="
+            find . -maxdepth 4 -not -path './.git/*' | head -80
+            echo ""
+            echo "=== xcodebuild -list ==="
+            xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true
+            echo ""
+            echo "=== xcodebuild -showBuildSettings ==="
+            xcodebuild -project BankGridApp.xcodeproj -scheme BankGridApp -showBuildSettings 2>&1 | head -50 || true
+            echo ""
+            echo "=== Scheme file ==="
+            cat BankGridApp.xcodeproj/xcshareddata/xcschemes/BankGridApp.xcscheme 2>/dev/null || echo "No scheme file found"
+            echo ""
+            echo "=== Workspace ==="
+            ls -laR BankGridApp.xcodeproj/project.xcworkspace/ 2>/dev/null || echo "No workspace dir"
+            echo ""
+            echo "=== pbxproj file size ==="
+            wc -l BankGridApp.xcodeproj/project.pbxproj
+            echo ""
+            echo "=== Try -target ==="
+            xcodebuild build -project BankGridApp.xcodeproj -target BankGridApp -destination 'generic/platform=iOS' -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO 2>&1 | head -30 || true
+          } > debug_output.txt 2>&1
+          cat debug_output.txt
+          gh issue comment 1 --body-file debug_output.txt || true
 
       - name: Build with xcodebuild
         run: |
