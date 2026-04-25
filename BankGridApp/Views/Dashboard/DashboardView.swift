@@ -5,13 +5,21 @@ struct DashboardView: View {
     @ObservedObject var appData: AppData
     let calculator: GridCalculator
 
-    @StateObject private var viewModel = DashboardViewModel()
+    @StateObject private var viewModel: DashboardViewModel
 
     @State private var showSellSheet = false
     @State private var showBuySheet = false
     @State private var showDividendSheet = false
     @State private var showEditSheet = false
     @State private var selectedPosition: Position?
+
+    init(priceService: PriceService, appData: AppData, calculator: GridCalculator) {
+        self._priceService = ObservedObject(wrappedValue: priceService)
+        self._appData = ObservedObject(wrappedValue: appData)
+        self.calculator = calculator
+        let p = DataPersistence()
+        _viewModel = StateObject(wrappedValue: DashboardViewModel(persistence: p))
+    }
 
     var body: some View {
         ScrollView {
@@ -53,22 +61,22 @@ struct DashboardView: View {
         }
         .sheet(isPresented: $showSellSheet) {
             if let pos = selectedPosition {
-                TradeSheetView(position: pos, side: "sell", calculator: calculator, priceService: priceService, appData: appData)
+                TradeSheetView(side: "sell", position: pos, calculator: calculator, priceService: priceService, appData: appData, persistence: DataPersistence(), onCompleted: { viewModel.loadData(prices: priceService.prices, netCashFlow: appData.netCashFlow) })
             }
         }
         .sheet(isPresented: $showBuySheet) {
             if let pos = selectedPosition {
-                TradeSheetView(position: pos, side: "buy", calculator: calculator, priceService: priceService, appData: appData)
+                TradeSheetView(side: "buy", position: pos, calculator: calculator, priceService: priceService, appData: appData, persistence: DataPersistence(), onCompleted: { viewModel.loadData(prices: priceService.prices, netCashFlow: appData.netCashFlow) })
             }
         }
         .sheet(isPresented: $showDividendSheet) {
             if let pos = selectedPosition {
-                DividendSheetView(position: pos, appData: appData)
+                DividendSheetView(position: pos, appData: appData, persistence: DataPersistence(), onCompleted: { viewModel.loadData(prices: priceService.prices, netCashFlow: appData.netCashFlow) })
             }
         }
         .sheet(isPresented: $showEditSheet) {
             if let pos = selectedPosition {
-                EditSheetView(position: pos, appData: appData)
+                EditPositionSheetView(position: pos, calculator: calculator, appData: appData, persistence: DataPersistence(), onCompleted: { viewModel.loadData(prices: priceService.prices, netCashFlow: appData.netCashFlow) })
             }
         }
     }
@@ -302,234 +310,5 @@ struct DashboardView: View {
 
     private func pnlColor(_ value: Double) -> Color {
         value > 0 ? Color.themeRed : (value < 0 ? Color.themeGreen : Color.themeText)
-    }
-}
-
-struct TradeSheetView: View {
-    let position: Position
-    let side: String
-    let calculator: GridCalculator
-    @ObservedObject var priceService: PriceService
-    @ObservedObject var appData: AppData
-
-    @State private var tradePrice: String = ""
-    @State private var tradeShares: String = ""
-    @State private var divTax: String = "0"
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationView {
-            Form {
-                Section(header: Text(side == "sell" ? "卖出 \(position.name ?? "")" : "买入 \(position.name ?? "")")) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("成交价（系统现价: ¥\(currentPriceStr)）")
-                            .font(.system(size: 13))
-                            .foregroundColor(Color.themeText2)
-                        TextField("成交价", text: $tradePrice)
-                            .keyboardType(.decimalPad)
-                    }
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("成交股数（策略建议 \(suggestedShares)股）")
-                            .font(.system(size: 13))
-                            .foregroundColor(Color.themeText2)
-                        TextField("股数", text: $tradeShares)
-                            .keyboardType(.numberPad)
-                    }
-
-                    if side == "sell" {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("代扣红利税 (元)")
-                                .font(.system(size: 13))
-                                .foregroundColor(Color.themeText2)
-                            TextField("红利税", text: $divTax)
-                                .keyboardType(.decimalPad)
-                        }
-                    }
-                }
-
-                Section {
-                    tradePreview
-                }
-
-                Section {
-                    Button(action: { dismiss() }) {
-                        Text(side == "sell" ? "确认卖出并更新P点" : "确认买入并更新P点")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(side == "sell" ? Color.themeRed : Color.themeGreen)
-                            .cornerRadius(10)
-                    }
-                    Button(action: { dismiss() }) {
-                        Text("取消")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(Color.themeAccent)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(Color.themeAccent.opacity(0.1))
-                            .cornerRadius(10)
-                    }
-                }
-            }
-            .scrollContentBackground(.hidden)
-            .background(Color.themeBg)
-        }
-        .onAppear {
-            let rtp = priceService.prices[position.code ?? ""]?.current ?? 0
-            let trigP = side == "sell" ? calculator.sellPrice(basePrice: position.basePrice) : calculator.buyPrice(basePrice: position.basePrice)
-            let defaultPrice = rtp > 0 ? rtp : trigP
-            tradePrice = String(format: "%.3f", defaultPrice)
-            tradeShares = "\(suggestedShares)"
-        }
-    }
-
-    private var currentPriceStr: String {
-        let rtp = priceService.prices[position.code ?? ""]?.current ?? 0
-        return rtp > 0 ? String(format: "%.3f", rtp) : "--"
-    }
-
-    private var suggestedShares: Int {
-        calculator.calcGridShares(currentShares: Int(position.shares))
-    }
-
-    private var tradePreview: some View {
-        let price = Double(tradePrice) ?? 0
-        let shares = Int(tradeShares) ?? 0
-        let amount = price * Double(shares)
-        let fees = calculator.calcFeeDetail(amount: amount, side: side)
-        let totalFee = fees.total + (Double(divTax) ?? 0)
-        let net = side == "sell" ? amount - totalFee : amount + totalFee
-        let newShares = side == "sell" ? Int(position.shares) - shares : Int(position.shares) + shares
-
-        return VStack(alignment: .leading, spacing: 6) {
-            Text(side == "sell" ? "实收：" : "实付：")
-                .font(.system(size: 13))
-                .foregroundColor(Color.themeText2) +
-            Text(String(format: "¥%.2f", net))
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(Color.themeText)
-
-            Text(String(format: "预估费用(¥%.2f)：佣金¥%.2f / 过户费¥%.3f", totalFee, fees.comm, fees.transfer) +
-                 (side == "sell" ? String(format: " / 印花税¥%.2f", fees.stamp) : "") +
-                 ((Double(divTax) ?? 0) > 0 ? String(format: " / 红利税¥%.2f", Double(divTax) ?? 0) : ""))
-                .font(.system(size: 11))
-                .foregroundColor(Color.themeText2)
-                .padding(8)
-                .background(Color.themeCard2.opacity(0.5))
-                .cornerRadius(6)
-
-            Text("交易后持仓：\(newShares)股")
-                .font(.system(size: 13))
-                .foregroundColor(Color.themeText2) +
-            Text("  新基准价 P 更新为：")
-                .font(.system(size: 13))
-                .foregroundColor(Color.themeText2) +
-            Text(String(format: "¥%.3f", price))
-                .font(.system(size: 15, weight: .bold))
-                .foregroundColor(Color.themeAccent)
-        }
-        .font(.system(size: 13))
-    }
-}
-
-struct DividendSheetView: View {
-    let position: Position
-    @ObservedObject var appData: AppData
-
-    @State private var dividendAmount: String = ""
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationView {
-            Form {
-                Section(header: Text("除息调整")) {
-                    Text("\(position.name ?? "") · P=¥\(String(format: "%.3f", position.basePrice))")
-                        .font(.system(size: 14))
-                        .foregroundColor(Color.themeText2)
-
-                    TextField("每股分红（元）", text: $dividendAmount)
-                        .keyboardType(.decimalPad)
-                }
-
-                Section {
-                    Button(action: { dismiss() }) {
-                        Text("确认调整基准价 P")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(Color.themeAccent)
-                            .cornerRadius(10)
-                    }
-                    Button(action: { dismiss() }) {
-                        Text("取消")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(Color.themeAccent)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(Color.themeAccent.opacity(0.1))
-                            .cornerRadius(10)
-                    }
-                }
-            }
-            .scrollContentBackground(.hidden)
-            .background(Color.themeBg)
-        }
-    }
-}
-
-struct EditSheetView: View {
-    let position: Position
-    @ObservedObject var appData: AppData
-
-    @State private var editShares: String = ""
-    @State private var editBasePrice: String = ""
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationView {
-            Form {
-                Section(header: Text("编辑持仓")) {
-                    Text(position.name ?? "")
-                        .font(.system(size: 14))
-                        .foregroundColor(Color.themeText2)
-
-                    TextField("持仓股数", text: $editShares)
-                        .keyboardType(.numberPad)
-
-                    TextField("基准价 P", text: $editBasePrice)
-                        .keyboardType(.decimalPad)
-                }
-
-                Section {
-                    Button(action: { dismiss() }) {
-                        Text("保存修正")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(Color.themeAccent)
-                            .cornerRadius(10)
-                    }
-                    Button(action: { dismiss() }) {
-                        Text("取消")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(Color.themeAccent)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(Color.themeAccent.opacity(0.1))
-                            .cornerRadius(10)
-                    }
-                }
-            }
-            .scrollContentBackground(.hidden)
-            .background(Color.themeBg)
-        }
-        .onAppear {
-            editShares = "\(position.shares)"
-            editBasePrice = String(format: "%.3f", position.basePrice)
-        }
     }
 }

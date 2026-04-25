@@ -35,7 +35,7 @@ struct LogItem: Identifiable {
         } else if action == "月度平准" {
             detail = "总市 ¥\(Int(log.totalValue)) 目标每只 ¥\(Int(log.target))"
         } else if action == "手动编辑" {
-            detail = "\(bank) \(log.shares)股 P=¥\(log.basePrice.toFixed(3))"
+            detail = "\(bank) \(log.shares)股 P=¥\(log.newBase.toFixed(3))"
         } else {
             detail = "\(bank) \(log.shares)股 ¥\(log.price.toFixed(2))"
         }

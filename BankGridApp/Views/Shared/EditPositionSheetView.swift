@@ -82,7 +82,7 @@ struct EditPositionSheetView: View {
             action: "手动编辑",
             bank: position.name ?? "",
             shares: Int32(roundedShares),
-            basePrice: position.basePrice
+            newBase: position.basePrice
         )
         onCompleted()
         dismiss()
