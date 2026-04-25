@@ -14,42 +14,49 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Debug - Diagnose and post to issue
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          {
-            echo "=== Xcode version ==="
-            xcodebuild -version
-            echo ""
-            echo "=== xcode-select ==="
-            xcode-select -p
-            echo ""
-            echo "=== Project Structure ==="
-            find . -maxdepth 4 -not -path './.git/*' | head -80
-            echo ""
-            echo "=== xcodebuild -list ==="
-            xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true
-            echo ""
-            echo "=== xcodebuild -showBuildSettings ==="
-            xcodebuild -project BankGridApp.xcodeproj -scheme BankGridApp -showBuildSettings 2>&1 | head -50 || true
-            echo ""
-            echo "=== Scheme file ==="
-            cat BankGridApp.xcodeproj/xcshareddata/xcschemes/BankGridApp.xcscheme 2>/dev/null || echo "No scheme file found"
-            echo ""
-            echo "=== Workspace ==="
-            ls -laR BankGridApp.xcodeproj/project.xcworkspace/ 2>/dev/null || echo "No workspace dir"
-            echo ""
-            echo "=== pbxproj file size ==="
-            wc -l BankGridApp.xcodeproj/project.pbxproj
-            echo ""
-            echo "=== Try -target ==="
-            xcodebuild build -project BankGridApp.xcodeproj -target BankGridApp -destination 'generic/platform=iOS' -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO 2>&1 | head -30 || true
-          } > debug_output.txt 2>&1
-          cat debug_output.txt
-          gh issue comment 1 --body-file debug_output.txt || true
+      - name: Install XcodeGen
+        run: brew install xcodegen
 
-      - name: Build with xcodebuild
+      - name: Generate Xcode Project
+        run: |
+          cat > project.yml << 'EOF'
+          name: BankGridApp
+          options:
+            bundleIdPrefix: com.dorian
+            deploymentTarget:
+              iOS: "16.0"
+            xcodeVersion: "15.4"
+            generateEmptyDirectories: true
+          settings:
+            base:
+              SWIFT_VERSION: "5.0"
+              CODE_SIGN_IDENTITY: ""
+              CODE_SIGNING_REQUIRED: NO
+              CODE_SIGNING_ALLOWED: NO
+              DEVELOPMENT_TEAM: ""
+              ENABLE_USER_SCRIPT_SANDBOXING: NO
+          targets:
+            BankGridApp:
+              type: application
+              platform: iOS
+              sources:
+                - BankGridApp
+              settings:
+                base:
+                  INFOPLIST_FILE: BankGridApp/Info.plist
+                  PRODUCT_BUNDLE_IDENTIFIER: com.dorian.BankGridApp
+                  ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+                  GENERATE_INFOPLIST_FILE: NO
+                  TARGETED_DEVICE_FAMILY: "1,2"
+                  IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+              entitlements:
+                path: BankGridApp/BankGridApp.entitlements
+                properties:
+                  com.apple.security.app-sandbox: false
+          EOF
+          xcodegen generate
+
+      - name: Build
         run: |
           set -o pipefail
           xcodebuild build \
