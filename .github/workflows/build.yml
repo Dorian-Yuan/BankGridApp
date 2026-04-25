@@ -19,11 +19,21 @@ jobs:
         with:
           xcode-version: '15.4'
 
+      - name: Debug Info
+        run: |
+          xcodebuild -version
+          echo "--- Project list ---"
+          xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true
+          echo "--- Scheme files ---"
+          find BankGridApp.xcodeproj -name "*.xcscheme" 2>/dev/null || true
+          echo "--- PbxProj check ---"
+          head -5 BankGridApp.xcodeproj/project.pbxproj
+
       - name: Build
         run: |
           xcodebuild build \
             -project BankGridApp.xcodeproj \
-            -scheme BankGridApp \
+            -target BankGridApp \
             -destination 'generic/platform=iOS' \
             -configuration Release \
             -derivedDataPath build/DerivedData \
@@ -31,20 +41,26 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             DEVELOPMENT_TEAM="" \
-            ENABLE_USER_SCRIPT_SANDBOXING=NO
+            ENABLE_USER_SCRIPT_SANDBOXING=NO \
+            2>&1 | tee build.log || true
+          echo "--- Build exit code: $? ---"
+          echo "--- Find .app ---"
+          find build/DerivedData -name "*.app" 2>/dev/null || true
+          echo "--- Find any errors in log ---"
+          grep -i "error:" build.log | head -30 || true
 
       - name: Create IPA
         run: |
-          APP_PATH=$(find build/DerivedData -name "BankGridApp.app" -path "*/Release-iphoneos/*" | head -1)
+          APP_PATH=$(find build/DerivedData -name "BankGridApp.app" -path "*iphoneos*" | head -1)
           echo "Found app at: $APP_PATH"
           if [ -z "$APP_PATH" ]; then
-            echo "ERROR: BankGridApp.app not found!"
+            echo "ERROR: BankGridApp.app not found in expected location"
             find build/DerivedData -name "*.app" 2>/dev/null || true
             exit 1
           fi
           mkdir -p Payload
           cp -r "$APP_PATH" Payload/
-          zip -r BankGridApp.ipa Payload
+          zip -qr BankGridApp.ipa Payload
           ls -la BankGridApp.ipa
 
       - name: Upload IPA Artifact
