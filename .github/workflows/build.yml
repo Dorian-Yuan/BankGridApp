@@ -19,46 +19,45 @@ jobs:
         with:
           xcode-version: '15.4'
 
-      - name: List Schemes
+      - name: Show Xcode Info
         run: |
-          xcodebuild -project BankGridApp.xcodeproj -list || true
+          xcodebuild -version
+          xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true
+          ls -la BankGridApp.xcodeproj/
 
-      - name: Build Archive
+      - name: Build
         run: |
-          xcodebuild archive \
+          xcodebuild build \
             -project BankGridApp.xcodeproj \
             -scheme BankGridApp \
             -destination 'generic/platform=iOS' \
-            -archivePath build/BankGridApp.xcarchive \
+            -configuration Release \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             DEVELOPMENT_TEAM="" \
+            ENABLE_USER_SCRIPT_SANDBOXING=NO \
             GCC_WARN_INHIBIT_ALL_WARNINGS=YES \
-            WARNING_CFLAGS="-w"
+            WARNING_CFLAGS="-w" \
+            2>&1 | tee build.log
 
-      - name: Export IPA
+      - name: Create IPA
         run: |
-          mkdir -p build/ipa
-          xcodebuild -exportArchive \
-            -archivePath build/BankGridApp.xcarchive \
-            -exportOptionsPlist ExportOptions.plist \
-            -exportPath build/ipa \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            DEVELOPMENT_TEAM=""
+          mkdir -p Payload
+          cp -r DerivedData/Build/Products/Release-iphoneos/BankGridApp.app Payload/
+          zip -r BankGridApp.ipa Payload
+          ls -la BankGridApp.ipa
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
           name: BankGridApp.ipa
-          path: build/ipa/*.ipa
+          path: BankGridApp.ipa
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v1
         with:
-          files: build/ipa/*.ipa
+          files: BankGridApp.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
