@@ -7,6 +7,9 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  issues: write
+
 jobs:
   build:
     runs-on: macos-14
@@ -51,47 +54,35 @@ jobs:
           YMLEOF
           xcodegen generate
 
-      - name: Build
+      - name: Archive Project
         run: |
-          set -o pipefail
-          xcodebuild build \
+          xcodebuild archive \
             -project BankGridApp.xcodeproj \
             -scheme BankGridApp \
-            -destination 'generic/platform=iOS' \
+            -sdk iphoneos \
             -configuration Release \
-            -derivedDataPath build/DerivedData \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
+            -archivePath build/BankGridApp.xcarchive \
             CODE_SIGNING_ALLOWED=NO \
-            DEVELOPMENT_TEAM="" \
-            ENABLE_USER_SCRIPT_SANDBOXING=NO \
             2>&1 | tee build.log
 
-      - name: Post build log to issue
-        if: always()
+      - name: Post build log to issue on failure
+        if: failure()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ -f build.log ]; then
-            LOG_CONTENT=$(head -200 build.log)
+            LOG_CONTENT=$(head -300 build.log | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))')
             curl -s -X POST \
               -H "Authorization: token $GITHUB_TOKEN" \
               -H "Accept: application/vnd.github.v3+json" \
               https://api.github.com/repos/${{ github.repository }}/issues/1/comments \
-              -d "{\"body\": \"Build log (run #${{ github.run_number }}):\\n\\n\`\`\`\\n${LOG_CONTENT}\\n\`\`\`\"}" || true
+              -d "{\"body\": \"Build log (run #${{ github.run_number }}):\n\n\`\`\`\n${LOG_CONTENT}\n\`\`\`\"}" || true
           fi
 
       - name: Create IPA
         run: |
-          APP_PATH=$(find build/DerivedData -name "BankGridApp.app" -type d | head -1)
-          if [ -z "$APP_PATH" ]; then
-            echo "ERROR: BankGridApp.app not found"
-            find build/DerivedData -maxdepth 5 -type d 2>/dev/null || true
-            exit 1
-          fi
-          echo "Found: $APP_PATH"
           mkdir -p Payload
-          cp -r "$APP_PATH" Payload/
+          cp -r build/BankGridApp.xcarchive/Products/Applications/BankGridApp.app Payload/
           zip -qr BankGridApp.ipa Payload
           ls -la BankGridApp.ipa
 
