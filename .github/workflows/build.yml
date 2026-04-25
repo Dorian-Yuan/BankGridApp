@@ -19,22 +19,16 @@ jobs:
 
       - name: Generate Xcode Project
         run: |
-          cat > project.yml << 'EOF'
+          cat > project.yml << 'YMLEOF'
           name: BankGridApp
           options:
             bundleIdPrefix: com.dorian
             deploymentTarget:
               iOS: "16.0"
-            xcodeVersion: "15.4"
             generateEmptyDirectories: true
           settings:
             base:
               SWIFT_VERSION: "5.0"
-              CODE_SIGN_IDENTITY: ""
-              CODE_SIGNING_REQUIRED: NO
-              CODE_SIGNING_ALLOWED: NO
-              DEVELOPMENT_TEAM: ""
-              ENABLE_USER_SCRIPT_SANDBOXING: NO
           targets:
             BankGridApp:
               type: application
@@ -49,11 +43,12 @@ jobs:
                   GENERATE_INFOPLIST_FILE: NO
                   TARGETED_DEVICE_FAMILY: "1,2"
                   IPHONEOS_DEPLOYMENT_TARGET: "16.0"
-              entitlements:
-                path: BankGridApp/BankGridApp.entitlements
-                properties:
-                  com.apple.security.app-sandbox: false
-          EOF
+                  CODE_SIGN_IDENTITY: ""
+                  CODE_SIGNING_REQUIRED: NO
+                  CODE_SIGNING_ALLOWED: NO
+                  DEVELOPMENT_TEAM: ""
+                  ENABLE_USER_SCRIPT_SANDBOXING: NO
+          YMLEOF
           xcodegen generate
 
       - name: Build
@@ -72,12 +67,13 @@ jobs:
             ENABLE_USER_SCRIPT_SANDBOXING=NO \
             2>&1 | tee build.log
 
-      - name: Upload build log
+      - name: Output build log to summary
         if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: build.log
+        run: |
+          echo "## Build Log" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat build.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Create IPA
         run: |
