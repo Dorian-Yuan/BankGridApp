@@ -14,16 +14,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Debug - Show project structure
+      - name: Debug - Show project structure and diagnose
         run: |
-          echo "=== Project Structure ==="
-          find . -maxdepth 4 -not -path './.git/*' | head -80
-          echo "=== Xcode version ==="
-          xcodebuild -version
-          echo "=== Trying xcodebuild -list ==="
-          xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true
-          echo "=== Trying xcodebuild -showBuildSettings ==="
-          xcodebuild -project BankGridApp.xcodeproj -scheme BankGridApp -showBuildSettings 2>&1 | head -30 || true
+          {
+            echo "=== Project Structure ==="
+            find . -maxdepth 4 -not -path './.git/*' | head -80
+            echo "=== Xcode version ==="
+            xcodebuild -version
+            echo "=== xcode-select ==="
+            xcode-select -p
+            echo "=== Trying xcodebuild -list ==="
+            xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true
+            echo "=== Trying xcodebuild -showBuildSettings ==="
+            xcodebuild -project BankGridApp.xcodeproj -scheme BankGridApp -showBuildSettings 2>&1 | head -50 || true
+            echo "=== Checking scheme file ==="
+            cat BankGridApp.xcodeproj/xcshareddata/xcschemes/BankGridApp.xcscheme 2>/dev/null || echo "No scheme file found"
+            echo "=== Checking workspace ==="
+            ls -la BankGridApp.xcodeproj/project.xcworkspace/ 2>/dev/null || echo "No workspace dir"
+            cat BankGridApp.xcodeproj/project.xcworkspace/contents.xcworkspacedata 2>/dev/null || echo "No workspace data"
+          } > debug_output.txt 2>&1
+          cat debug_output.txt
+
+      - name: Upload debug output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-output
+          path: debug_output.txt
 
       - name: Build with xcodebuild
         run: |
@@ -40,6 +57,13 @@ jobs:
             DEVELOPMENT_TEAM="" \
             ENABLE_USER_SCRIPT_SANDBOXING=NO \
             2>&1 | tee build.log
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
 
       - name: Create IPA
         run: |
