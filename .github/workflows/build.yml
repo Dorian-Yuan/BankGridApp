@@ -22,7 +22,7 @@ jobs:
       - name: Build Archive
         run: |
           xcodebuild archive \
-            -project BankGridApp/BankGridApp.xcodeproj \
+            -project BankGridApp.xcodeproj \
             -scheme BankGridApp \
             -archivePath build/BankGridApp.xcarchive \
             CODE_SIGN_IDENTITY="" \
@@ -34,10 +34,7 @@ jobs:
           xcodebuild -exportArchive \
             -archivePath build/BankGridApp.xcarchive \
             -exportOptionsPlist ExportOptions.plist \
-            -exportPath build/ipa \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
+            -exportPath build/ipa
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
