@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: write
-  issues: write
 
 jobs:
   build:
@@ -48,28 +47,14 @@ jobs:
       - name: Output build log on failure
         if: failure()
         run: |
+          echo "=== Error lines ==="
+          grep -E "error:|warning:" build.log 2>/dev/null || echo "No error lines found"
           {
-            echo "## Build Failed"
+            echo "## Build Log (errors and warnings)"
             echo '```'
-            tail -200 build.log 2>/dev/null || echo "No build log found"
+            grep -E "error:|warning:" build.log 2>/dev/null || echo "No errors found"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          echo "=== Error lines ==="
-          grep -i "error:" build.log 2>/dev/null || echo "No error lines found"
-          ERROR_LINES=$(grep -i "error:" build.log 2>/dev/null || echo "No error lines found")
-          BUILD_LOG=$(tail -100 build.log 2>/dev/null || echo "No build log found")
-          BODY="## Build Failed - Run #${{ github.run_number }}
-
-          **Error Lines:**
-          \`\`\`
-          ${ERROR_LINES}
-          \`\`\`
-
-          **Build Log (last 100 lines):**
-          \`\`\`
-          ${BUILD_LOG}
-          \`\`\`"
-          gh issue comment 2 --body "$BODY" || true
 
       - name: Create IPA
         run: |
