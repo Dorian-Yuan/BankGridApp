@@ -23,7 +23,9 @@ jobs:
       - name: Generate Xcode Project
         run: |
           xcodegen generate
-          echo "=== Scheme list ==="
+          echo "=== Project structure ==="
+          find BankGridApp.xcodeproj -type f 2>/dev/null || true
+          echo "=== Target/Scheme list ==="
           xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true
 
       - name: Build Project
@@ -31,7 +33,7 @@ jobs:
           set -o pipefail
           xcodebuild build \
             -project BankGridApp.xcodeproj \
-            -scheme BankGridApp \
+            -target BankGridApp \
             -sdk iphoneos \
             -configuration Release \
             -derivedDataPath build/DerivedData \
