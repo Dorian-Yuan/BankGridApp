@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 struct GridSettings: Codable {
     var gridUp: Double = 0.012
@@ -45,5 +46,3 @@ enum AppTheme: String, Codable, CaseIterable {
         }
     }
 }
-
-import SwiftUI

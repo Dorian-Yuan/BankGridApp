@@ -8,7 +8,6 @@ on:
   workflow_dispatch:
 
 permissions:
-  issues: write
   contents: write
 
 jobs:
@@ -25,16 +24,6 @@ jobs:
         run: |
           xcodegen generate
           echo "=== Scheme list ==="
-          xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true
-
-      - name: Share scheme for xcodebuild
-        run: |
-          SCHEME_DIR="BankGridApp.xcodeproj/xcshareddata/xcschemes"
-          mkdir -p "$SCHEME_DIR"
-          find BankGridApp.xcodeproj -name "*.xcscheme" -exec cp {} "$SCHEME_DIR/" \; || true
-          echo "=== Shared schemes ==="
-          ls -la "$SCHEME_DIR" 2>/dev/null || echo "No shared schemes"
-          echo "=== Scheme list after sharing ==="
           xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true
 
       - name: Build Project
@@ -57,7 +46,7 @@ jobs:
           {
             echo "## Build Failed"
             echo '```'
-            tail -150 build.log 2>/dev/null || echo "No build log found"
+            tail -200 build.log 2>/dev/null || echo "No build log found"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           echo "=== Error lines ==="

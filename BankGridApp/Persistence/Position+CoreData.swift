@@ -6,6 +6,10 @@ public class Position: NSManagedObject {
 }
 
 extension Position {
+    @nonobjc class func fetchRequest() -> NSFetchRequest<Position> {
+        return NSFetchRequest<Position>(entityName: "Position")
+    }
+
     @NSManaged public var code: String?
     @NSManaged public var name: String?
     @NSManaged public var short: String?

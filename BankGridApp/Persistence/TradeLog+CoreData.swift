@@ -6,6 +6,10 @@ public class TradeLog: NSManagedObject {
 }
 
 extension TradeLog {
+    @nonobjc class func fetchRequest() -> NSFetchRequest<TradeLog> {
+        return NSFetchRequest<TradeLog>(entityName: "TradeLog")
+    }
+
     @NSManaged public var id: UUID?
     @NSManaged public var action: String?
     @NSManaged public var bank: String?
