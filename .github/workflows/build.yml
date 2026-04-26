@@ -56,13 +56,17 @@ jobs:
           xcodegen generate
           echo "Generated project files:"
           ls -la BankGridApp.xcodeproj/
+          echo "Available schemes:"
+          xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true
+          echo "Available targets:"
+          xcodebuild -project BankGridApp.xcodeproj -target BankGridApp -showBuildSettings 2>&1 | head -5 || true
 
       - name: Build Project
         run: |
           set -o pipefail
           xcodebuild build \
             -project BankGridApp.xcodeproj \
-            -scheme BankGridApp \
+            -target BankGridApp \
             -sdk iphoneos \
             -configuration Release \
             -derivedDataPath build/DerivedData \
@@ -75,8 +79,8 @@ jobs:
         if: failure()
         run: |
           echo "=== BUILD FAILED ==="
-          echo "Last 100 lines of build log:"
-          tail -100 build.log || true
+          echo "Last 150 lines of build log:"
+          tail -150 build.log || true
           echo "=== Error lines ==="
           grep -i "error:" build.log || true
 
