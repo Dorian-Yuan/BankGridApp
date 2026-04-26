@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   build:
@@ -21,38 +22,56 @@ jobs:
         run: brew install xcodegen
 
       - name: Generate Xcode Project
+        id: xcodegen
         run: |
-          {
-            echo "## XcodeGen Output"
-            echo '```'
-            xcodegen generate 2>&1
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-          echo ""
-          echo "=== Generated project structure ==="
-          find BankGridApp.xcodeproj -type f 2>/dev/null || echo "No project found"
-          echo ""
-          echo "=== Scheme files ==="
-          find BankGridApp.xcodeproj -name "*.xcscheme" 2>/dev/null || echo "No scheme files found"
-          echo ""
-          echo "=== Target/Scheme list ==="
-          xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true
-          {
-            echo "## Project Structure"
-            echo '```'
-            find BankGridApp.xcodeproj -type f 2>/dev/null
-            echo '```'
-            echo ""
-            echo "## Scheme Files"
-            echo '```'
-            find BankGridApp.xcodeproj -name "*.xcscheme" 2>/dev/null || echo "No scheme files found"
-            echo '```'
-            echo ""
-            echo "## Target/Scheme List"
-            echo '```'
-            xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          XCODEGEN_OUTPUT=$(xcodegen generate 2>&1)
+          echo "XCODEGEN_OUTPUT<<EOF" >> "$GITHUB_ENV"
+          echo "$XCODEGEN_OUTPUT" >> "$GITHUB_ENV"
+          echo "EOF" >> "$GITHUB_ENV"
+          
+          PROJECT_FILES=$(find BankGridApp.xcodeproj -type f 2>/dev/null || echo "No project found")
+          echo "PROJECT_FILES<<EOF" >> "$GITHUB_ENV"
+          echo "$PROJECT_FILES" >> "$GITHUB_ENV"
+          echo "EOF" >> "$GITHUB_ENV"
+          
+          SCHEME_FILES=$(find BankGridApp.xcodeproj -name "*.xcscheme" 2>/dev/null || echo "No scheme files found")
+          echo "SCHEME_FILES<<EOF" >> "$GITHUB_ENV"
+          echo "$SCHEME_FILES" >> "$GITHUB_ENV"
+          echo "EOF" >> "$GITHUB_ENV"
+          
+          LIST_OUTPUT=$(xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true)
+          echo "LIST_OUTPUT<<EOF" >> "$GITHUB_ENV"
+          echo "$LIST_OUTPUT" >> "$GITHUB_ENV"
+          echo "EOF" >> "$GITHUB_ENV"
+
+      - name: Post debug info to issue
+        if: always()
+        run: |
+          DEBUG_BODY="## Run #${{ github.run_number }}
+          
+          **XcodeGen Output:**
+          \`\`\`
+          ${XCODEGEN_OUTPUT}
+          \`\`\`
+          
+          **Project Files:**
+          \`\`\`
+          ${PROJECT_FILES}
+          \`\`\`
+          
+          **Scheme Files:**
+          \`\`\`
+          ${SCHEME_FILES}
+          \`\`\`
+          
+          **Target/Scheme List:**
+          \`\`\`
+          ${LIST_OUTPUT}
+          \`\`\`"
+          
+          gh issue comment 2 --body "$DEBUG_BODY" || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Project
         run: |
@@ -71,25 +90,30 @@ jobs:
       - name: Output build log on failure
         if: failure()
         run: |
-          {
-            echo "## Build Failed"
-            echo '```'
-            tail -200 build.log 2>/dev/null || echo "No build log found"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-          echo "=== Error lines ==="
-          grep -i "error:" build.log 2>/dev/null || echo "No error lines found"
+          BUILD_LOG=$(tail -200 build.log 2>/dev/null || echo "No build log found")
+          ERROR_LINES=$(grep -i "error:" build.log 2>/dev/null || echo "No error lines found")
+          
+          BODY="## Build Failed - Run #${{ github.run_number }}
+          
+          **Error Lines:**
+          \`\`\`
+          ${ERROR_LINES}
+          \`\`\`
+          
+          **Build Log (last 200 lines):**
+          \`\`\`
+          ${BUILD_LOG}
+          \`\`\`"
+          
+          gh issue comment 2 --body "$BODY" || true
 
       - name: Create IPA
         run: |
-          echo "Searching for .app in DerivedData..."
-          find build/DerivedData -name "*.app" -type d 2>/dev/null || true
           APP_PATH=$(find build/DerivedData -name "*.app" -type d | head -1)
           if [ -z "$APP_PATH" ]; then
             echo "ERROR: No .app found"
             exit 1
           fi
-          echo "Found: $APP_PATH"
           mkdir -p Payload
           cp -r "$APP_PATH" Payload/
           zip -qr BankGridApp.ipa Payload
