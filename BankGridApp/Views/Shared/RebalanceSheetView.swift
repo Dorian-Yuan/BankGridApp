@@ -12,6 +12,7 @@ struct RebalanceSheetView: View {
     @State private var remainCash: Double = 0
     @State private var extraCash: Double = 0
     @State private var manualPrices: [String: Double] = [:]
+    @State private var fetchedPrices: [String: Double] = [:]
 
     var body: some View {
         NavigationStack {
@@ -69,6 +70,13 @@ struct RebalanceSheetView: View {
                 }
             }
         }
+        .onAppear {
+            for pos in positions {
+                if let code = pos.code {
+                    fetchedPrices[code] = priceService.price(for: code)
+                }
+            }
+        }
     }
 
     private func bindingFor(code: String) -> Binding<Double> {
@@ -83,7 +91,7 @@ struct RebalanceSheetView: View {
         for pos in positions {
             if let code = pos.code {
                 let mp = manualPrices[code] ?? 0
-                prices[code] = mp > 0 ? mp : priceService.price(for: code)
+                prices[code] = mp > 0 ? mp : (fetchedPrices[code] ?? 0)
             }
         }
 

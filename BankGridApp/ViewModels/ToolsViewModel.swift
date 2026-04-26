@@ -69,6 +69,7 @@ class ToolsViewModel: ObservableObject {
         )
     }
 
+    @MainActor
     func saveGeneralSettings(refreshInterval: Double, theme: AppTheme) {
         guard refreshInterval >= 5 else {
             showErrorMessage("刷新间隔不能低于5�?)
@@ -104,6 +105,7 @@ class ToolsViewModel: ObservableObject {
         showSuccessMessage("手续费设置已保存")
     }
 
+    @MainActor
     func calculateProfitBreakdown() {
         let logs = persistence.fetchTradeLogs(limit: 10000)
         let positions = persistence.fetchPositions()
@@ -214,7 +216,13 @@ class ToolsViewModel: ObservableObject {
         var warning = ""
 
         if shortFall > 0 && buyNeed > 0 {
-            let positiveDeltaCodes = codes.filter { (deltas[$0] ?? 0) > 0 }
+            var positiveDeltaCodes: [String] = []
+            for code in codes {
+                let delta = deltas[code] ?? 0
+                if delta > 0 {
+                    positiveDeltaCodes.append(code)
+                }
+            }
             let buyItems = positiveDeltaCodes.sorted { code1, code2 in
                 let d1 = Double(deltas[code1] ?? 0) * (prices[code1] ?? 0)
                 let d2 = Double(deltas[code2] ?? 0) * (prices[code2] ?? 0)
@@ -293,6 +301,16 @@ class ToolsViewModel: ObservableObject {
         persistence.addTradeLog(
             action: "月度平准",
             bank: "",
+            price: 0,
+            shares: 0,
+            amount: 0,
+            fee: 0,
+            dividend: 0,
+            divTax: 0,
+            oldBase: 0,
+            newBase: 0,
+            remainShares: 0,
+            totalShares: 0,
             buys: Int32(buyC),
             sells: Int32(sellC),
             totalValue: newTotal,

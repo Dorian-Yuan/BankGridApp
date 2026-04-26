@@ -124,6 +124,8 @@ struct DividendSheetView: View {
         persistence.addTradeLog(
             action: "除息调整",
             bank: position.name ?? "",
+            price: dividendPerShare,
+            shares: position.shares,
             amount: divAmount,
             dividend: dividendPerShare,
             divTax: divTax,

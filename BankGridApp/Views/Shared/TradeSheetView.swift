@@ -13,11 +13,7 @@ struct TradeSheetView: View {
     @State private var tradePrice: Double = 0
     @State private var tradeShares: Int = 0
     @State private var divTax: Double = 0
-
-    @MainActor
-    private var rtp: Double {
-        priceService.price(for: position.code ?? "")
-    }
+    @State private var currentPrice: Double = 0
 
     private var suggestedShares: Int {
         calculator.calcGridShares(currentShares: Int(position.shares))
@@ -51,7 +47,7 @@ struct TradeSheetView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("成交价（系统现价: ¥\(rtp > 0 ? String(format: "%.3f", rtp) : "--")）")
+                        Text("成交价（系统现价: ¥\(currentPrice > 0 ? String(format: "%.3f", currentPrice) : "--")）")
                             .font(.system(size: 13))
                             .foregroundColor(.themeText2)
                         TextField("", value: $tradePrice, format: .number.precision(.fractionLength(3)))
@@ -101,7 +97,8 @@ struct TradeSheetView: View {
             }
         }
         .onAppear {
-            tradePrice = rtp
+            currentPrice = priceService.price(for: position.code ?? "")
+            tradePrice = currentPrice
             tradeShares = suggestedShares
         }
     }
