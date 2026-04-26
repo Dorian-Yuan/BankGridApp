@@ -4,6 +4,8 @@ options:
   deploymentTarget:
     iOS: "16.0"
   generateEmptyDirectories: true
+  xcodeVersion: "15.0"
+  postGenCommand: sed -i '' 's/objectVersion = 77/objectVersion = 56/g' BankGridApp.xcodeproj/project.pbxproj
 settings:
   base:
     SWIFT_VERSION: "5.0"
