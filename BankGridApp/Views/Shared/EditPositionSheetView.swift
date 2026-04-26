@@ -2,88 +2,64 @@ import SwiftUI
 
 struct EditPositionSheetView: View {
     let position: Position
-    let calculator: GridCalculator
-    let appData: AppData
     let persistence: DataPersistence
     let onCompleted: () -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @State private var shares: Int = 0
     @State private var basePrice: Double = 0
+    @State private var shares: Int = 0
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text(position.name ?? "")
-                        .font(.system(size: 14))
+            VStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("基准价")
+                        .font(.system(size: 13))
                         .foregroundColor(.themeText2)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("持仓股数")
-                            .font(.system(size: 13))
-                            .foregroundColor(.themeText2)
-                        TextField("", value: $shares, format: .number)
-                            .keyboardType(.numberPad)
-                            .textFieldStyle(CustomTextFieldStyle())
-                    }
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("基准价 P")
-                            .font(.system(size: 13))
-                            .foregroundColor(.themeText2)
-                        TextField("", value: $basePrice, format: .number.precision(.fractional(3)))
-                            .keyboardType(.decimalPad)
-                            .textFieldStyle(CustomTextFieldStyle())
-                    }
-
-                    Button(action: executeEdit) {
-                        Text("保存修正")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(Color.themeAccent)
-                            .cornerRadius(10)
-                    }
-
-                    Button(action: { dismiss() }) {
-                        Text("取消")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.themeAccent)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(Color.themeAccent.opacity(0.1))
-                            .cornerRadius(10)
-                    }
+                    TextField("", value: $basePrice, format: .number.precision(.fractionLength(3)))
+                        .keyboardType(.decimalPad)
+                        .textFieldStyle(CustomTextFieldStyle())
                 }
-                .padding(20)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("持仓股数")
+                        .font(.system(size: 13))
+                        .foregroundColor(.themeText2)
+                    TextField("", value: $shares, format: .number)
+                        .keyboardType(.numberPad)
+                        .textFieldStyle(CustomTextFieldStyle())
+                }
+
+                Button(action: saveChanges) {
+                    Text("保存修改")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.themeAccent)
+                        .cornerRadius(10)
+                }
             }
+            .padding(20)
             .background(Color.themeBg)
             .navigationTitle("编辑持仓")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("取消") { dismiss() }
+                }
+            }
         }
         .onAppear {
-            shares = Int(position.shares)
             basePrice = position.basePrice
+            shares = Int(position.shares)
         }
     }
 
-    private func executeEdit() {
-        let roundedShares = calculator.roundLot(shares)
-        let diffShares = roundedShares - Int(position.shares)
-        appData.netCashFlow -= Double(diffShares) * (basePrice > 0 ? basePrice : position.basePrice)
-        position.shares = Int32(roundedShares)
-        if basePrice > 0 {
-            position.basePrice = basePrice
-        }
+    private func saveChanges() {
+        position.basePrice = basePrice
+        position.shares = Int32(shares)
         persistence.save()
-        persistence.addTradeLog(
-            action: "手动编辑",
-            bank: position.name ?? "",
-            shares: Int32(roundedShares),
-            newBase: position.basePrice
-        )
         onCompleted()
         dismiss()
     }

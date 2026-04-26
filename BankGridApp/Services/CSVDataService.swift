@@ -73,10 +73,10 @@ class CSVDataService: ObservableObject {
         }
 
         var iDate = findCol(["date", "日期"])
-        var iOpen = findCol(["open", "开盘"])
+        var iOpen = findCol(["open", "开�?])
         var iClose = findCol(["close", "收盘"])
-        var iHigh = findCol(["high", "最高"])
-        var iLow = findCol(["low", "最低"])
+        var iHigh = findCol(["high", "最�?])
+        var iLow = findCol(["low", "最�?])
 
         if iOpen == -1 { iDate = 0; iOpen = 1; iClose = 2; iHigh = 3; iLow = 4 }
 

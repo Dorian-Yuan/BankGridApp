@@ -66,7 +66,7 @@ struct OverviewView: View {
             )
             summaryItem(
                 value: "\(viewModel.buyCount) / \(viewModel.sellCount)",
-                label: "买/卖次数",
+                label: "�?卖次�?,
                 color: .themeText
             )
             summaryItem(
@@ -130,7 +130,7 @@ struct OverviewView: View {
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
                     HStack(spacing: 2) {
-                        Text(triUp ? "▲ " : (triDown ? "▼ " : ""))
+                        Text(triUp ? "�?" : (triDown ? "�?" : ""))
                             .font(.system(size: 11))
                             .foregroundColor(triUp ? .themeRed : (triDown ? .themeGreen : .clear))
                         Text(pos.name ?? "")
@@ -157,12 +157,12 @@ struct OverviewView: View {
                     .padding(.vertical, 3)
 
                 VStack(spacing: 3) {
-                    detailRow(label: "P价", value: String(format: "%.3f", pos.basePrice))
+                    detailRow(label: "P�?, value: String(format: "%.3f", pos.basePrice))
                     detailRow(label: "持仓", value: "\(pos.shares)")
                     detailRow(label: "今开", value: pd.open > 0 ? String(format: "%.3f", pd.open) : "--")
                     detailRow(label: "昨收", value: pd.yClose > 0 ? String(format: "%.3f", pd.yClose) : "--")
-                    detailRow(label: "最高", value: pd.high > 0 ? String(format: "%.3f", pd.high) : "--")
-                    detailRow(label: "最低", value: pd.low > 0 ? String(format: "%.3f", pd.low) : "--")
+                    detailRow(label: "最�?, value: pd.high > 0 ? String(format: "%.3f", pd.high) : "--")
+                    detailRow(label: "最�?, value: pd.low > 0 ? String(format: "%.3f", pd.low) : "--")
                 }
             }
             .padding(10)

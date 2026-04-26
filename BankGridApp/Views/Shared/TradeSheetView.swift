@@ -14,6 +14,7 @@ struct TradeSheetView: View {
     @State private var tradeShares: Int = 0
     @State private var divTax: Double = 0
 
+    @MainActor
     private var rtp: Double {
         priceService.price(for: position.code ?? "")
     }
@@ -50,16 +51,16 @@ struct TradeSheetView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("成交价（系统现价: ¥\(rtp > 0 ? rtp.toFixed(3) : "--")）")
+                        Text("成交价（系统现价: ¥\(rtp > 0 ? String(format: "%.3f", rtp) : "--")）")
                             .font(.system(size: 13))
                             .foregroundColor(.themeText2)
-                        TextField("", value: $tradePrice, format: .number.precision(.fractional(3)))
+                        TextField("", value: $tradePrice, format: .number.precision(.fractionLength(3)))
                             .keyboardType(.decimalPad)
                             .textFieldStyle(CustomTextFieldStyle())
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("成交股数（策略建议 \(suggestedShares)股）")
+                        Text("成交股数（策略建议\(suggestedShares)股）")
                             .font(.system(size: 13))
                             .foregroundColor(.themeText2)
                         TextField("", value: $tradeShares, format: .number)
@@ -68,154 +69,147 @@ struct TradeSheetView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("代扣红利税 (元，若有)")
+                        Text("代扣红利税（元，若有）")
                             .font(.system(size: 13))
                             .foregroundColor(.themeText2)
-                        TextField("0", value: $divTax, format: .number.precision(.fractional(2)))
+                        TextField("0", value: $divTax, format: .number.precision(.fractionLength(2)))
                             .keyboardType(.decimalPad)
                             .textFieldStyle(CustomTextFieldStyle())
                     }
 
                     tradePreviewCard
 
-                    if side == "sell" {
-                        Button(action: executeSell) {
-                            Text("确认卖出并更新P点")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(Color.themeRed.opacity(0.85))
-                                .cornerRadius(10)
-                        }
-                    } else {
-                        Button(action: executeBuy) {
-                            Text("确认买入并更新P点")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(Color.themeGreen.opacity(0.85))
-                                .cornerRadius(10)
-                        }
-                    }
-
-                    Button(action: { dismiss() }) {
-                        Text("取消")
+                    Button(action: executeTrade) {
+                        Text(side == "sell" ? "确认卖出" : "确认买入")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.themeAccent)
+                            .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
-                            .background(Color.themeAccent.opacity(0.1))
+                            .background(side == "sell" ? Color.red.opacity(0.8) : Color.themeAccent)
                             .cornerRadius(10)
                     }
                 }
                 .padding(20)
             }
             .background(Color.themeBg)
-            .navigationTitle("\(side == "sell" ? "卖出" : "买入") \(position.name ?? "")")
+            .navigationTitle(side == "sell" ? "网格卖出" : "网格买入")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("取消") { dismiss() }
+                }
+            }
         }
         .onAppear {
-            let trigP = side == "sell"
-                ? calculator.sellPrice(basePrice: position.basePrice)
-                : calculator.buyPrice(basePrice: position.basePrice)
-            tradePrice = rtp > 0 ? rtp : trigP
+            tradePrice = rtp
             tradeShares = suggestedShares
         }
     }
 
     private var tradePreviewCard: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("\(side == "sell" ? "实收" : "实付")：¥\(netAmount.toFixed(2))")
-                .font(.system(size: 13, weight: .semibold))
+        VStack(alignment: .leading, spacing: 8) {
+            Text("交易预览")
+                .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.themeText)
 
-            HStack(spacing: 0) {
-                Text("预估费用(¥\(totalFee.toFixed(2)))：佣金¥\(feeDetail.comm.toFixed(2)) / 过户费¥\(feeDetail.transfer.toFixed(3))")
-                if side == "sell" {
-                    Text(" / 印花税¥\(feeDetail.stamp.toFixed(2))")
-                }
-                if divTax > 0 {
-                    Text(" / 红利税¥\(divTax.toFixed(2))")
+            HStack {
+                Text("成交金额")
+                    .foregroundColor(.themeText2)
+                Spacer()
+                Text("¥\(String(format: "%.2f", amount))")
+                    .foregroundColor(.themeText)
+            }
+
+            HStack {
+                Text("佣金")
+                    .foregroundColor(.themeText2)
+                Spacer()
+                Text("¥\(String(format: "%.2f", feeDetail.comm))")
+                    .foregroundColor(.themeText)
+            }
+
+            HStack {
+                Text("过户费")
+                    .foregroundColor(.themeText2)
+                Spacer()
+                Text("¥\(String(format: "%.2f", feeDetail.transfer))")
+                    .foregroundColor(.themeText)
+            }
+
+            if side == "sell" {
+                HStack {
+                    Text("印花税")
+                        .foregroundColor(.themeText2)
+                    Spacer()
+                    Text("¥\(String(format: "%.2f", feeDetail.stamp))")
+                        .foregroundColor(.themeText)
                 }
             }
-            .font(.system(size: 11))
-            .foregroundColor(.themeText2)
-            .padding(8)
-            .background(Color.themeAccent.opacity(0.05))
-            .cornerRadius(6)
 
-            Text("交易后持仓：\(newShares)股")
-                .font(.system(size: 13))
-                .foregroundColor(.themeText)
+            if divTax > 0 {
+                HStack {
+                    Text("红利税")
+                        .foregroundColor(.themeText2)
+                    Spacer()
+                    Text("¥\(String(format: "%.2f", divTax))")
+                        .foregroundColor(.themeText)
+                }
+            }
 
-            HStack(spacing: 4) {
-                Text("新基准价 P 更新为：")
-                    .font(.system(size: 13))
+            Divider()
+
+            HStack {
+                Text("总费用")
                     .foregroundColor(.themeText2)
-                Text("¥\(tradePrice.toFixed(3))")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(.themeAccent)
+                Spacer()
+                Text("¥\(String(format: "%.2f", totalFee))")
+                    .foregroundColor(.themeText)
+            }
+
+            HStack {
+                Text(side == "sell" ? "净收入" : "净支出")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.themeText)
+                Spacer()
+                Text("¥\(String(format: "%.2f", netAmount))")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(side == "sell" ? .green : .red)
             }
         }
         .padding(12)
-        .background(Color.themeCard2)
+        .background(Color.themeCard)
         .cornerRadius(10)
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.themeBorder, lineWidth: 1)
-        )
     }
 
-    private func executeSell() {
+    private func executeTrade() {
         guard tradePrice > 0, tradeShares > 0 else { return }
-        guard tradeShares <= Int(position.shares) else { return }
 
-        let execShares = calculator.roundLot(tradeShares)
-        let amount = tradePrice * Double(execShares)
-        let fee = totalFee
+        let oldBase = position.basePrice
+        let newBase = tradePrice
 
-        position.shares -= Int32(execShares)
-        position.basePrice = tradePrice
-        appData.netCashFlow += (amount - fee)
-        persistence.save()
+        if side == "sell" {
+            position.shares -= Int32(tradeShares)
+        } else {
+            position.shares += Int32(tradeShares)
+        }
+        position.basePrice = newBase
+
         persistence.addTradeLog(
-            action: "网格卖出",
+            action: side == "sell" ? "网格卖出" : "网格买入",
             bank: position.name ?? "",
             price: tradePrice,
-            shares: Int32(execShares),
+            shares: Int32(tradeShares),
             amount: amount,
-            fee: fee,
+            fee: totalFee,
             divTax: divTax,
-            newBase: tradePrice,
-            remainShares: position.shares
+            oldBase: oldBase,
+            newBase: newBase,
+            remainShares: position.shares,
+            totalShares: position.shares,
+            totalValue: Double(position.shares) * tradePrice
         )
-        onCompleted()
-        dismiss()
-    }
 
-    private func executeBuy() {
-        guard tradePrice > 0, tradeShares > 0 else { return }
-
-        let execShares = calculator.roundLot(tradeShares)
-        let amount = tradePrice * Double(execShares)
-        let fee = totalFee
-
-        position.shares += Int32(execShares)
-        position.basePrice = tradePrice
-        appData.netCashFlow -= (amount + fee)
         persistence.save()
-        persistence.addTradeLog(
-            action: "网格买入",
-            bank: position.name ?? "",
-            price: tradePrice,
-            shares: Int32(execShares),
-            amount: amount,
-            fee: fee,
-            newBase: tradePrice,
-            totalShares: position.shares
-        )
         onCompleted()
         dismiss()
     }

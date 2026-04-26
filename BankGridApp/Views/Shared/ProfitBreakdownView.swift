@@ -30,7 +30,7 @@ struct ProfitBreakdownView: View {
                         summaryRow(title: "合计收益", value: breakdown.totalPnL, isBold: true) {
                             breakdown.totalPnL >= 0 ? .themeRed : .themeGreen
                         }
-                        summaryRow(title: "总投入成本", value: breakdown.totalCost, isBold: false) {
+                        summaryRow(title: "总投入成�?, value: breakdown.totalCost, isBold: false) {
                             .themeText
                         }
                         summaryRow(title: "总收益率", percentage: breakdown.totalReturnRate, isBold: false) {

@@ -22,6 +22,7 @@ struct RebalancePreview {
     var targetShares: [String: Int] = [:]
 }
 
+@MainActor
 class ToolsViewModel: ObservableObject {
     @Published var appData: AppData
     @Published var persistence: DataPersistence
@@ -70,31 +71,31 @@ class ToolsViewModel: ObservableObject {
 
     func saveGeneralSettings(refreshInterval: Double, theme: AppTheme) {
         guard refreshInterval >= 5 else {
-            showErrorMessage("刷新间隔不能低于5秒")
+            showErrorMessage("刷新间隔不能低于5�?)
             return
         }
         appData.settings.refreshInterval = refreshInterval
         appData.settings.theme = theme
         priceService.updateSettings(appData.settings)
         updateCalculator()
-        showSuccessMessage("设置已保存")
+        showSuccessMessage("设置已保�?)
     }
 
     func saveGridSettings(gridUp: Double, gridDown: Double, tradeRatio: Double) {
         guard gridUp > 0, gridDown > 0, tradeRatio > 0 else {
-            showErrorMessage("请输入合法数字")
+            showErrorMessage("请输入合法数�?)
             return
         }
         appData.settings.gridUp = gridUp
         appData.settings.gridDown = gridDown
         appData.settings.tradeRatio = tradeRatio
         updateCalculator()
-        showSuccessMessage("参数已保存")
+        showSuccessMessage("参数已保�?)
     }
 
     func saveFeeSettings(feeRate: Double, feeMin: Double) {
         guard feeRate > 0, feeMin >= 0 else {
-            showErrorMessage("请输入合法数字")
+            showErrorMessage("请输入合法数�?)
             return
         }
         appData.settings.feeRate = feeRate
@@ -213,8 +214,12 @@ class ToolsViewModel: ObservableObject {
         var warning = ""
 
         if shortFall > 0 && buyNeed > 0 {
-            let buyItems = codes.filter { (deltas[$0] ?? 0) > 0 }
-                .sorted { (deltas[$0] ?? 0) * (prices[$0] ?? 0) < (deltas[$1] ?? 0) * (prices[$1] ?? 0) }
+            let positiveDeltaCodes = codes.filter { (deltas[$0] ?? 0) > 0 }
+            let buyItems = positiveDeltaCodes.sorted { code1, code2 in
+                let d1 = Double(deltas[code1] ?? 0) * (prices[code1] ?? 0)
+                let d2 = Double(deltas[code2] ?? 0) * (prices[code2] ?? 0)
+                return d1 < d2
+            }
 
             var adjustedDeltas = deltas
             var adjustedTargetShares = targetShares
@@ -240,9 +245,9 @@ class ToolsViewModel: ObservableObject {
             targetShares = adjustedTargetShares
 
             if shortFall > 0.01 {
-                warning = "❌ 无可用资金，无法执行再平衡"
+                warning = "�?无可用资金，无法执行再平�?
             } else {
-                warning = "⚠️ 资金不足，已自动缩减买入量"
+                warning = "⚠️ 资金不足，已自动缩减买入�?
             }
         }
 
@@ -288,10 +293,10 @@ class ToolsViewModel: ObservableObject {
         persistence.addTradeLog(
             action: "月度平准",
             bank: "",
-            totalValue: newTotal,
-            target: preview.target,
             buys: Int32(buyC),
-            sells: Int32(sellC)
+            sells: Int32(sellC),
+            totalValue: newTotal,
+            target: preview.target
         )
 
         showSuccessMessage("平准执行成功")
@@ -309,7 +314,7 @@ class ToolsViewModel: ObservableObject {
     }
 
     func executeReset() {
-        persistence.backupData()
+        let _ = persistence.backupData()
         persistence.deleteAllPositions()
         persistence.deleteAllTradeLogs()
         appData.netCashFlow = 0

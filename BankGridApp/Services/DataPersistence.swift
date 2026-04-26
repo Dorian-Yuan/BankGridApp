@@ -30,6 +30,10 @@ class DataPersistence {
         return pos
     }
 
+    func addPosition(code: String, name: String, short: String, shares: Int32, basePrice: Double, avgCost: Double, totalCost: Double) {
+        let _ = createPosition(code: code, name: name, short: short, shares: shares, basePrice: basePrice, avgCost: avgCost, totalCost: totalCost)
+    }
+
     func fetchTradeLogs(limit: Int = 80) -> [TradeLog] {
         let request: NSFetchRequest<TradeLog> = TradeLog.fetchRequest()
         request.sortDescriptors = [NSSortDescriptor(keyPath: \TradeLog.timestamp, ascending: false)]

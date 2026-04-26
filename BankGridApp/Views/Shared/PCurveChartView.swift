@@ -36,17 +36,17 @@ struct PCurveChartView: View {
 
     private var header: some View {
         VStack(spacing: 4) {
-            Text("\(position.name ?? "") 基准价曲线")
+            Text("\(position.name ?? "") 基准价曲�?)
                 .font(.headline)
                 .foregroundColor(.themeText)
             HStack(spacing: 4) {
-                Text("当前持仓: \(position.shares)股")
+                Text("当前持仓: \(position.shares)�?)
                     .font(.system(size: 13))
                     .foregroundColor(.themeText2)
                 Text("|")
                     .font(.system(size: 13))
                     .foregroundColor(.themeText2)
-                Text("现P点: ¥\(String(format: "%.3f", position.basePrice))")
+                Text("现P�? ¥\(String(format: "%.3f", position.basePrice))")
                     .font(.system(size: 13))
                     .foregroundColor(.themeAccent)
             }
