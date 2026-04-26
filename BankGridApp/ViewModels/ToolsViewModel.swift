@@ -72,31 +72,31 @@ class ToolsViewModel: ObservableObject {
     @MainActor
     func saveGeneralSettings(refreshInterval: Double, theme: AppTheme) {
         guard refreshInterval >= 5 else {
-            showErrorMessage("刷新间隔不能低于5�?)
+            showErrorMessage("刷新间隔不能低于5秒")
             return
         }
         appData.settings.refreshInterval = refreshInterval
         appData.settings.theme = theme
         priceService.updateSettings(appData.settings)
         updateCalculator()
-        showSuccessMessage("设置已保�?)
+        showSuccessMessage("设置已保存")
     }
 
     func saveGridSettings(gridUp: Double, gridDown: Double, tradeRatio: Double) {
         guard gridUp > 0, gridDown > 0, tradeRatio > 0 else {
-            showErrorMessage("请输入合法数�?)
+            showErrorMessage("请输入合法数值")
             return
         }
         appData.settings.gridUp = gridUp
         appData.settings.gridDown = gridDown
         appData.settings.tradeRatio = tradeRatio
         updateCalculator()
-        showSuccessMessage("参数已保�?)
+        showSuccessMessage("参数已保存")
     }
 
     func saveFeeSettings(feeRate: Double, feeMin: Double) {
         guard feeRate > 0, feeMin >= 0 else {
-            showErrorMessage("请输入合法数�?)
+            showErrorMessage("请输入合法数值")
             return
         }
         appData.settings.feeRate = feeRate
@@ -253,9 +253,9 @@ class ToolsViewModel: ObservableObject {
             targetShares = adjustedTargetShares
 
             if shortFall > 0.01 {
-                warning = "�?无可用资金，无法执行再平�?
+                warning = "❌无可用资金，无法执行再平衡"
             } else {
-                warning = "⚠️ 资金不足，已自动缩减买入�?
+                warning = "⚠️ 资金不足，已自动缩减买入量"
             }
         }
 

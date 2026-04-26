@@ -8,31 +8,31 @@ struct ToolsView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 10) {
-                    toolCard(icon: "🎛�?, title: "通用设置", subtitle: "主题外观与刷新频�?) {
+                    toolCard(icon: "🎛️", title: "通用设置", subtitle: "主题外观与刷新频率") {
                         viewModel.settingsType = .general
                         viewModel.showSettingsSheet = true
                     }
 
-                    toolCard(icon: "⚙️", title: "网格与仓位设�?, subtitle: "自定义买卖点、单次仓�?) {
+                    toolCard(icon: "⚙️", title: "网格与仓位设置", subtitle: "自定义买卖点、单次仓位") {
                         viewModel.settingsType = .grid
                         viewModel.showSettingsSheet = true
                     }
 
-                    toolCard(icon: "💰", title: "交易手续费设�?, subtitle: "佣金、过户费与印花税详情") {
+                    toolCard(icon: "💰", title: "交易手续费设置", subtitle: "佣金、过户费与印花税详情") {
                         viewModel.settingsType = .fees
                         viewModel.showSettingsSheet = true
                     }
 
-                    toolCard(icon: "📊", title: "网格利润拆解", subtitle: "网格利差/分红/浮盈三分�?) {
+                    toolCard(icon: "📊", title: "网格利润拆解", subtitle: "网格利差/分红/浮盈三分类") {
                         viewModel.calculateProfitBreakdown()
                         viewModel.showProfitBreakdown = true
                     }
 
-                    toolCard(icon: "⚖️", title: "月度平准再平�?, subtitle: "资金归齐与仓位内部重分配") {
+                    toolCard(icon: "⚖️", title: "月度平准再平衡", subtitle: "资金归齐与仓位内部重分配") {
                         viewModel.showRebalance = true
                     }
 
-                    toolCard(icon: "🗑�?, title: "重置所有数�?自动备份)", subtitle: "清除持仓与日志并在云端保存存�?, isDanger: true) {
+                    toolCard(icon: "🗑️", title: "重置所有数据(自动备份)", subtitle: "清除持仓与日志并在云端保存存档", isDanger: true) {
                         viewModel.confirmReset()
                     }
                 }
@@ -76,7 +76,7 @@ struct ToolsView: View {
                 }
             } message: {
                 if viewModel.resetStep == 1 {
-                    Text("确定要重置并清除所有历史记录吗？\n\n备份机制：\n为防止误操作，当前持仓和日志数据将自动按时间戳打包备份到本地云盘中�?)
+                    Text("确定要重置并清除所有历史记录吗？\n\n备份机制：\n为防止误操作，当前持仓和日志数据将自动按时间戳打包备份到本地云盘中。")
                 } else {
                     Text("当前面板的所有数据即将清零。确定执行重置与备份吗？")
                 }

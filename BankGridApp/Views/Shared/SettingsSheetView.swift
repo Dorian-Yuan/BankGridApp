@@ -50,15 +50,15 @@ struct SettingsSheetView: View {
     private var navigationTitle: String {
         switch viewModel.settingsType {
         case .general: return "通用设置"
-        case .grid: return "网格与仓位设�?
-        case .fees: return "交易手续费设�?
+        case .grid: return "网格与仓位设置"
+        case .fees: return "交易手续费设置"
         }
     }
 
     private var generalSettings: some View {
         VStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("后台自动刷新频率 (�?")
+                Text("后台自动刷新频率 (秒)")
                     .font(.system(size: 13))
                     .foregroundColor(.themeText2)
                 TextField("", value: $refreshInterval, format: .number)
@@ -144,7 +144,7 @@ struct SettingsSheetView: View {
     private var feesSettings: some View {
         VStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("佣金费率 (万分�?")
+                Text("佣金费率 (万分之)")
                     .font(.system(size: 13))
                     .foregroundColor(.themeText2)
                 TextField("", value: $feeRate, format: .number.precision(.fractionLength(2)))
@@ -153,7 +153,7 @@ struct SettingsSheetView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("单笔最低佣�?(�?")
+                Text("单笔最低佣金 (元)")
                     .font(.system(size: 13))
                     .foregroundColor(.themeText2)
                 TextField("", value: $feeMin, format: .number.precision(.fractionLength(1)))
@@ -169,7 +169,7 @@ struct SettingsSheetView: View {
                 .foregroundColor(.themeText2)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("过户�?)
+                Text("过户费")
                     .font(.system(size: 13))
                     .foregroundColor(.themeText2)
                 HStack {
@@ -188,7 +188,7 @@ struct SettingsSheetView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("印花�?)
+                Text("印花税")
                     .font(.system(size: 13))
                     .foregroundColor(.themeText2)
                 HStack {

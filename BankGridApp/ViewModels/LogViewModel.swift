@@ -14,9 +14,9 @@ struct LogItem: Identifiable {
         let bank = log.bank ?? ""
 
         let color: Color
-        if action.contains("�?) {
+        if action.contains("买") {
             color = .themeGreen
-        } else if action.contains("�?) {
+        } else if action.contains("卖") {
             color = .themeRed
         } else if action.contains("除息") {
             color = .themeYellow
@@ -26,7 +26,7 @@ struct LogItem: Identifiable {
 
         var detail = ""
         if log.shares > 0 && log.price > 0 {
-            detail = "\(bank) \(log.shares)�?× ¥\(log.price.toFixed(2)) | �?¥\(log.fee.toFixed(2))"
+            detail = "\(bank) \(log.shares)股 × ¥\(log.price.toFixed(2)) | 费¥\(log.fee.toFixed(2))"
             if log.divTax > 0 {
                 detail += " (含红利税¥\(log.divTax.toFixed(2)))"
             }
@@ -35,9 +35,9 @@ struct LogItem: Identifiable {
         } else if action == "月度平准" {
             detail = "总市 ¥\(Int(log.totalValue)) 目标每只 ¥\(Int(log.target))"
         } else if action == "手动编辑" {
-            detail = "\(bank) \(log.shares)�?P=¥\(log.newBase.toFixed(3))"
+            detail = "\(bank) \(log.shares)股 P=¥\(log.newBase.toFixed(3))"
         } else {
-            detail = "\(bank) \(log.shares)�?¥\(log.price.toFixed(2))"
+            detail = "\(bank) \(log.shares)股 ¥\(log.price.toFixed(2))"
         }
 
         let formatter = DateFormatter()
