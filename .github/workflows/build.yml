@@ -53,22 +53,16 @@ jobs:
                   DEVELOPMENT_TEAM: ""
                   ENABLE_USER_SCRIPT_SANDBOXING: NO
           YMLEOF
+          sed -i '' 's/^          //' project.yml
+          cat project.yml
           xcodegen generate
 
       - name: Debug project info
         run: |
-          echo "=== Project dir contents ==="
-          ls -la || true
-          echo "=== xcodeproj contents ==="
-          ls -la BankGridApp.xcodeproj/ || true
           echo "=== Scheme list ==="
           xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true
           echo "=== All xcscheme files ==="
           find . -name "*.xcscheme" 2>/dev/null || true
-          echo "=== xcshareddata ==="
-          find . -name "xcshareddata" -type d 2>/dev/null || true
-          echo "=== Xcode version ==="
-          xcodebuild -version || true
 
       - name: Share scheme for xcodebuild
         run: |
@@ -77,8 +71,6 @@ jobs:
           find BankGridApp.xcodeproj -name "*.xcscheme" -exec cp {} "$SCHEME_DIR/" \; || true
           echo "=== Shared schemes ==="
           ls -la "$SCHEME_DIR" 2>/dev/null || echo "No shared schemes"
-          echo "=== Scheme list after sharing ==="
-          xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true
 
       - name: Build Project
         run: |
