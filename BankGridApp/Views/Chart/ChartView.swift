@@ -150,7 +150,7 @@ struct ChartView: View {
             .labelsHidden()
             .environment(\.locale, Locale(identifier: "zh_CN"))
 
-            Text("è‡?)
+            Text("ï¿½?)
                 .font(.system(size: 13))
                 .foregroundColor(.themeText2)
 

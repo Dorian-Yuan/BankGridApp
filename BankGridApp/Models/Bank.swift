@@ -18,7 +18,7 @@ let BANKS: [BankInfo] = [
     BankInfo(code: "601939", name: "建设银行", short: "建行", qtCode: "sh601939", colorHex: "#64D2FF"),
     BankInfo(code: "601288", name: "农业银行", short: "农行", qtCode: "sh601288", colorHex: "#FF3B30"),
     BankInfo(code: "601988", name: "中国银行", short: "中行", qtCode: "sh601988", colorHex: "#34C759"),
-    BankInfo(code: "601328", name: "交通银�?, short: "交行", qtCode: "sh601328", colorHex: "#BF5AF2"),
+    BankInfo(code: "601328", name: "交通银�?, short: "交行", qtCode: "sh601328", colorHex: "#BF5AF2"),
     BankInfo(code: "601658", name: "邮储银行", short: "邮储", qtCode: "sh601658", colorHex: "#FF6B8A")
 ]
 
