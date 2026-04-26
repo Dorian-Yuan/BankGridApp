@@ -86,6 +86,7 @@ struct RebalanceSheetView: View {
         )
     }
 
+    @MainActor
     private func executeRebalance() {
         var prices: [String: Double] = [:]
         for pos in positions {

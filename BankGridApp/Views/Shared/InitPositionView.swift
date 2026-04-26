@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct InitPositionView: View {
-    let banks: [Bank]
+    let banks: [BankInfo]
     let persistence: DataPersistence
     let appData: AppData
     let onCompleted: () -> Void
@@ -77,6 +77,7 @@ struct InitPositionView: View {
         )
     }
 
+    @MainActor
     private func savePositions() {
         if let capital = Double(initCapital) {
             appData.initCapital = capital
