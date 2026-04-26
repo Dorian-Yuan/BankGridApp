@@ -9,6 +9,7 @@ on:
 
 permissions:
   issues: write
+  contents: write
 
 jobs:
   build:
@@ -53,17 +54,31 @@ jobs:
                   ENABLE_USER_SCRIPT_SANDBOXING: NO
           YMLEOF
           xcodegen generate
+          echo "Generated project files:"
+          ls -la BankGridApp.xcodeproj/
 
-      - name: Archive Project
+      - name: Build Project
         run: |
-          xcodebuild archive \
+          set -o pipefail
+          xcodebuild build \
             -project BankGridApp.xcodeproj \
             -scheme BankGridApp \
             -sdk iphoneos \
             -configuration Release \
-            -archivePath build/BankGridApp.xcarchive \
+            -derivedDataPath build/DerivedData \
             CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" \
             2>&1 | tee build.log
+
+      - name: Output build log on failure
+        if: failure()
+        run: |
+          echo "=== BUILD FAILED ==="
+          echo "Last 100 lines of build log:"
+          tail -100 build.log || true
+          echo "=== Error lines ==="
+          grep -i "error:" build.log || true
 
       - name: Post build log to issue on failure
         if: failure()
@@ -71,7 +86,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ -f build.log ]; then
-            LOG_CONTENT=$(head -300 build.log | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))')
+            LOG_CONTENT=$(tail -200 build.log | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))')
             curl -s -X POST \
               -H "Authorization: token $GITHUB_TOKEN" \
               -H "Accept: application/vnd.github.v3+json" \
@@ -81,17 +96,11 @@ jobs:
 
       - name: Create IPA
         run: |
-          echo "Searching for .app in archive..."
-          find build/BankGridApp.xcarchive -name "*.app" -type d 2>/dev/null || true
-          echo "Archive structure:"
-          find build/BankGridApp.xcarchive -maxdepth 4 -type d 2>/dev/null || true
-          APP_PATH=$(find build/BankGridApp.xcarchive -name "*.app" -type d | head -1)
+          echo "Searching for .app in DerivedData..."
+          find build/DerivedData -name "*.app" -type d 2>/dev/null || true
+          APP_PATH=$(find build/DerivedData -name "*.app" -type d | head -1)
           if [ -z "$APP_PATH" ]; then
-            echo "ERROR: .app not found in archive, trying DerivedData..."
-            APP_PATH=$(find build -name "*.app" -type d | head -1)
-          fi
-          if [ -z "$APP_PATH" ]; then
-            echo "ERROR: No .app found anywhere"
+            echo "ERROR: No .app found"
             exit 1
           fi
           echo "Found: $APP_PATH"
