@@ -33,21 +33,6 @@ jobs:
           settings:
             base:
               SWIFT_VERSION: "5.0"
-          schemes:
-            BankGridApp:
-              build:
-                targets:
-                  BankGridApp: all
-              run:
-                config: Debug
-              test:
-                config: Debug
-              profile:
-                config: Release
-              analyze:
-                config: Debug
-              archive:
-                config: Release
           targets:
             BankGridApp:
               type: application
@@ -69,12 +54,31 @@ jobs:
                   ENABLE_USER_SCRIPT_SANDBOXING: NO
           YMLEOF
           xcodegen generate
-          echo "=== Available schemes ==="
-          xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true
-          echo "=== Scheme files ==="
-          find BankGridApp.xcodeproj -name "*.xcscheme" 2>/dev/null || echo "No scheme files"
-          echo "=== Shared data ==="
-          find BankGridApp.xcshareddata -type f 2>/dev/null || echo "No shared data"
+
+      - name: Debug project info
+        run: |
+          echo "=== Project dir contents ==="
+          ls -la
+          echo "=== xcodeproj contents ==="
+          ls -la BankGridApp.xcodeproj/
+          echo "=== Scheme list ==="
+          xcodebuild -project BankGridApp.xcodeproj -list 2>&1
+          echo "=== All xcscheme files ==="
+          find . -name "*.xcscheme" 2>/dev/null
+          echo "=== xcshareddata ==="
+          find . -name "xcshareddata" -type d 2>/dev/null
+          echo "=== Xcode version ==="
+          xcodebuild -version
+
+      - name: Share scheme for xcodebuild
+        run: |
+          SCHEME_DIR="BankGridApp.xcodeproj/xcshareddata/xcschemes"
+          mkdir -p "$SCHEME_DIR"
+          find BankGridApp.xcodeproj -name "*.xcscheme" -exec cp {} "$SCHEME_DIR/" \;
+          echo "=== Shared schemes ==="
+          ls -la "$SCHEME_DIR" 2>/dev/null || echo "No shared schemes"
+          echo "=== Scheme list after sharing ==="
+          xcodebuild -project BankGridApp.xcodeproj -list 2>&1
 
       - name: Build Project
         run: |
