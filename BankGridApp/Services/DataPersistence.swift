@@ -26,7 +26,14 @@ class DataPersistence {
     }
 
     func createPosition(code: String, name: String, short: String, shares: Int32, basePrice: Double, avgCost: Double, totalCost: Double) -> Position {
-        let pos = Position(context: viewContext, code: code, name: name, short: short, shares: shares, basePrice: basePrice, avgCost: avgCost, totalCost: totalCost)
+        let pos = Position(context: viewContext)
+        pos.code = code
+        pos.name = name
+        pos.short = short
+        pos.shares = shares
+        pos.basePrice = basePrice
+        pos.avgCost = avgCost
+        pos.totalCost = totalCost
         save()
         return pos
     }
@@ -50,7 +57,25 @@ class DataPersistence {
     }
 
     func addTradeLog(action: String, bank: String, price: Double = 0, shares: Int32 = 0, amount: Double = 0, fee: Double = 0, dividend: Double = 0, divTax: Double = 0, oldBase: Double = 0, newBase: Double = 0, remainShares: Int32 = 0, totalShares: Int32 = 0, buys: Int32 = 0, sells: Int32 = 0, totalValue: Double = 0, target: Double = 0) {
-        let _ = TradeLog(context: viewContext, action: action, bank: bank, price: price, shares: shares, amount: amount, fee: fee, dividend: dividend, divTax: divTax, oldBase: oldBase, newBase: newBase, remainShares: remainShares, totalShares: totalShares, buys: buys, sells: sells, totalValue: totalValue, target: target)
+        let log = TradeLog(context: viewContext)
+        log.id = UUID()
+        log.action = action
+        log.bank = bank
+        log.price = price
+        log.shares = shares
+        log.amount = amount
+        log.fee = fee
+        log.dividend = dividend
+        log.divTax = divTax
+        log.oldBase = oldBase
+        log.newBase = newBase
+        log.remainShares = remainShares
+        log.totalShares = totalShares
+        log.buys = buys
+        log.sells = sells
+        log.totalValue = totalValue
+        log.target = target
+        log.timestamp = Date()
         save()
     }
 
