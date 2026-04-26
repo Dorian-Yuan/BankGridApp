@@ -65,4 +65,10 @@ struct GridCalculator {
     func isHitBuy(basePrice: Double, currentPrice: Double) -> Bool {
         return currentPrice <= buyPrice(basePrice: basePrice)
     }
+
+    func calcDivTax(dividendPerShare: Double, shares: Int) -> Double {
+        let divAmount = dividendPerShare * Double(shares)
+        let taxRate = 0.1
+        return divAmount * taxRate
+    }
 }
