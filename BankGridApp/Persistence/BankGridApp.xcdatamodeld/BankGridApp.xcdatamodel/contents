@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="1" systemVersion="1" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
-    <entity name="Position" representedClassName="Position" syncable="YES" codeGenerationType="Manual">
+    <entity name="Position" representedClassName="Position" syncable="YES" codeGenerationType="class">
         <attribute name="code" attributeType="String"/>
         <attribute name="name" attributeType="String"/>
         <attribute name="short" attributeType="String"/>
@@ -9,7 +9,7 @@
         <attribute name="avgCost" attributeType="Double" defaultValueString="0.0"/>
         <attribute name="totalCost" attributeType="Double" defaultValueString="0.0"/>
     </entity>
-    <entity name="TradeLog" representedClassName="TradeLog" syncable="YES" codeGenerationType="Manual">
+    <entity name="TradeLog" representedClassName="TradeLog" syncable="YES" codeGenerationType="class">
         <attribute name="id" attributeType="UUID"/>
         <attribute name="action" attributeType="String"/>
         <attribute name="bank" attributeType="String"/>
