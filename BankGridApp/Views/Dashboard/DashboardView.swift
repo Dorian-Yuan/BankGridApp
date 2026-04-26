@@ -71,12 +71,12 @@ struct DashboardView: View {
         }
         .sheet(isPresented: $showDividendSheet) {
             if let pos = selectedPosition {
-                DividendSheetView(position: pos, appData: appData, persistence: DataPersistence(), onCompleted: { viewModel.loadData(prices: priceService.prices, netCashFlow: appData.netCashFlow) })
+                DividendSheetView(position: pos, calculator: calculator, persistence: DataPersistence(), appData: appData, onCompleted: { viewModel.loadData(prices: priceService.prices, netCashFlow: appData.netCashFlow) })
             }
         }
         .sheet(isPresented: $showEditSheet) {
             if let pos = selectedPosition {
-                EditPositionSheetView(position: pos, calculator: calculator, appData: appData, persistence: DataPersistence(), onCompleted: { viewModel.loadData(prices: priceService.prices, netCashFlow: appData.netCashFlow) })
+                EditPositionSheetView(position: pos, persistence: DataPersistence(), onCompleted: { viewModel.loadData(prices: priceService.prices, netCashFlow: appData.netCashFlow) })
             }
         }
     }
@@ -84,8 +84,8 @@ struct DashboardView: View {
     private var summaryBar: some View {
         HStack(spacing: 6) {
             summaryItem(
-                value: viewModel.totalRealValue > 0 ? String(format: "¥%.2f�?, viewModel.totalRealValue / 10000) : "--",
-                label: "总估�?,
+                value: viewModel.totalRealValue > 0 ? String(format: "¥%.2f�?, viewModel.totalRealValue / 10000) : "--",
+                label: "总估�?,
                 color: Color.themeText
             )
             summaryItem(
@@ -152,10 +152,10 @@ struct DashboardView: View {
 
             HStack(spacing: 0) {
                 VStack(spacing: 2) {
-                    Text("持仓与市�?)
+                    Text("持仓与市�?)
                         .font(.system(size: 10))
                         .foregroundColor(Color.themeText2)
-                    Text("\(pos.shares)�?/ ¥\(Int(mv))")
+                    Text("\(pos.shares)�?/ ¥\(Int(mv))")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(Color.themeText)
                 }
@@ -182,13 +182,13 @@ struct DashboardView: View {
 
             HStack(spacing: 6) {
                 gridTag(
-                    label: String(format: "卖出�?+%.1f%%", appData.settings.gridUp * 100),
+                    label: String(format: "卖出�?+%.1f%%", appData.settings.gridUp * 100),
                     price: String(format: "¥%.3f", sellP),
                     isSell: true,
                     isActive: hitSell
                 )
                 gridTag(
-                    label: String(format: "买入�?-%.1f%%", appData.settings.gridDown * 100),
+                    label: String(format: "买入�?-%.1f%%", appData.settings.gridDown * 100),
                     price: String(format: "¥%.3f", buyP),
                     isSell: false,
                     isActive: hitBuy
@@ -196,11 +196,11 @@ struct DashboardView: View {
             }
 
             HStack(spacing: 6) {
-                actionButton(title: "触发�?, isSell: true) {
+                actionButton(title: "触发�?, isSell: true) {
                     selectedPosition = pos
                     showSellSheet = true
                 }
-                actionButton(title: "触发�?, isSell: false) {
+                actionButton(title: "触发�?, isSell: false) {
                     selectedPosition = pos
                     showBuySheet = true
                 }
