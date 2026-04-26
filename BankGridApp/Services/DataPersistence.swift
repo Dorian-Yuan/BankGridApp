@@ -1,5 +1,6 @@
 import CoreData
 
+@MainActor
 class DataPersistence {
     let persistenceController: PersistenceController
 
