@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 class AppData: ObservableObject {
     @Published var netCashFlow: Double {
         didSet { UserDefaults.standard.set(netCashFlow, forKey: "netCashFlow") }

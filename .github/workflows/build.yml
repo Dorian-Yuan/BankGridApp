@@ -92,8 +92,7 @@ jobs:
           \`\`\`"
           gh issue create \
             --title "Build Failure #${{ github.run_number }}" \
-            --body "$ISSUE_BODY" \
-            --label "bug" || true
+            --body "$ISSUE_BODY" 2>&1 || echo "Failed to create issue"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
