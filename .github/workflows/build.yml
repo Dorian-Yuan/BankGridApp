@@ -22,7 +22,12 @@ jobs:
 
       - name: Generate Xcode Project
         run: |
-          xcodegen generate 2>&1
+          {
+            echo "## XcodeGen Output"
+            echo '```'
+            xcodegen generate 2>&1
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
           echo ""
           echo "=== Generated project structure ==="
           find BankGridApp.xcodeproj -type f 2>/dev/null || echo "No project found"
@@ -32,6 +37,22 @@ jobs:
           echo ""
           echo "=== Target/Scheme list ==="
           xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true
+          {
+            echo "## Project Structure"
+            echo '```'
+            find BankGridApp.xcodeproj -type f 2>/dev/null
+            echo '```'
+            echo ""
+            echo "## Scheme Files"
+            echo '```'
+            find BankGridApp.xcodeproj -name "*.xcscheme" 2>/dev/null || echo "No scheme files found"
+            echo '```'
+            echo ""
+            echo "## Target/Scheme List"
+            echo '```'
+            xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build Project
         run: |
