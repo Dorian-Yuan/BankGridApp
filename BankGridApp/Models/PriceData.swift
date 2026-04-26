@@ -1,6 +1,6 @@
 import Foundation
 
-struct PriceData {
+struct PriceData: Equatable {
     var current: Double = 0
     var yClose: Double = 0
     var open: Double = 0

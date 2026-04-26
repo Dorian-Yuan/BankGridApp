@@ -4,6 +4,14 @@ struct SettingsSheetView: View {
     @ObservedObject var viewModel: ToolsViewModel
     @Environment(\.dismiss) private var dismiss
 
+    @State private var refreshInterval: Double = 0
+    @State private var theme: AppTheme = .system
+    @State private var gridUp: Double = 0
+    @State private var gridDown: Double = 0
+    @State private var tradeRatio: Double = 0
+    @State private var feeRate: Double = 0
+    @State private var feeMin: Double = 0
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -28,6 +36,15 @@ struct SettingsSheetView: View {
                 }
             }
         }
+        .onAppear {
+            refreshInterval = viewModel.appData.settings.refreshInterval
+            theme = viewModel.appData.settings.theme
+            gridUp = viewModel.appData.settings.gridUp * 100
+            gridDown = viewModel.appData.settings.gridDown * 100
+            tradeRatio = viewModel.appData.settings.tradeRatio * 100
+            feeRate = viewModel.appData.settings.feeRate * 10000
+            feeMin = viewModel.appData.settings.feeMin
+        }
     }
 
     private var navigationTitle: String {
@@ -39,10 +56,7 @@ struct SettingsSheetView: View {
     }
 
     private var generalSettings: some View {
-        @State var refreshInterval = viewModel.appData.settings.refreshInterval
-        @State var theme = viewModel.appData.settings.theme
-
-        return VStack(spacing: 16) {
+        VStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("后台自动刷新频率 (秒)")
                     .font(.system(size: 13))
@@ -80,11 +94,7 @@ struct SettingsSheetView: View {
     }
 
     private var gridSettings: some View {
-        @State var gridUp = viewModel.appData.settings.gridUp * 100
-        @State var gridDown = viewModel.appData.settings.gridDown * 100
-        @State var tradeRatio = viewModel.appData.settings.tradeRatio * 100
-
-        return VStack(spacing: 16) {
+        VStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("卖出网格比例 (%)")
                     .font(.system(size: 13))
@@ -132,10 +142,7 @@ struct SettingsSheetView: View {
     }
 
     private var feesSettings: some View {
-        @State var feeRate = viewModel.appData.settings.feeRate * 10000
-        @State var feeMin = viewModel.appData.settings.feeMin
-
-        return VStack(spacing: 16) {
+        VStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("佣金费率 (万分之)")
                     .font(.system(size: 13))
