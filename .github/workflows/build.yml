@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   build:
@@ -29,9 +30,6 @@ jobs:
           echo ""
           echo "=== Scheme list ==="
           xcodebuild -project BankGridApp.xcodeproj -list 2>&1 || true
-          echo ""
-          echo "=== Target list ==="
-          xcodebuild -project BankGridApp.xcodeproj -target BankGridApp -showBuildSettings 2>&1 | head -30 || true
 
       - name: Build Project
         run: |
@@ -52,19 +50,52 @@ jobs:
           echo "=== Error lines ==="
           grep -E "error:|warning:" build.log 2>/dev/null || echo "No error lines found"
           echo ""
-          echo "=== Last 100 lines of build log ==="
-          tail -100 build.log 2>/dev/null || echo "No build log"
+          echo "=== Last 200 lines of build log ==="
+          tail -200 build.log 2>/dev/null || echo "No build log"
           {
             echo "## Build Log (errors and warnings)"
             echo '```'
             grep -E "error:|warning:" build.log 2>/dev/null || echo "No errors found"
             echo '```'
             echo ""
-            echo "## Last 100 lines of build log"
+            echo "## Last 200 lines of build log"
             echo '```'
-            tail -100 build.log 2>/dev/null || echo "No build log"
+            tail -200 build.log 2>/dev/null || echo "No build log"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+
+      - name: Post build errors to GitHub issue
+        if: failure()
+        run: |
+          ERROR_LOG=$(grep -E "error:" build.log 2>/dev/null | head -50 || echo "No errors found")
+          LAST_LINES=$(tail -50 build.log 2>/dev/null || echo "No build log")
+          ISSUE_BODY="## Build Failure - Run #${{ github.run_number }}
+
+          **Commit:** ${{ github.sha }}
+          **Date:** $(date -u)
+
+          ### Error Lines
+          \`\`\`
+          ${ERROR_LOG}
+          \`\`\`
+
+          ### Last 50 lines
+          \`\`\`
+          ${LAST_LINES}
+          \`\`\`"
+          gh issue create \
+            --title "Build Failure #${{ github.run_number }}" \
+            --body "$ISSUE_BODY" \
+            --label "bug" || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create IPA
         run: |
